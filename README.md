@@ -2029,7 +2029,7 @@ YanYu Cloud³ 高度重视系统安全。我们制定了全面的安全策略，
 
 ### 漏洞报告
 
-如果您发现任何安全漏洞，请通过电子邮件 [security@yanyu-ai.com](mailto:security@yanyu-ai.com) 报告。我们承诺在24小时内确认收到您的报告，并在72小时内提供初步评估。
+如果您发现任何安全漏洞，请通过电子邮件 [admin@0379.email](mailto:admin@0379.email) 报告。我们承诺在24小时内确认收到您的报告，并在72小时内提供初步评估。
 
 详情请参阅完整的 [安全策略文档](SECURITY.md)。
 
@@ -2037,10 +2037,10 @@ YanYu Cloud³ 高度重视系统安全。我们制定了全面的安全策略，
 
 ## 📞 联系我们
 
-- **项目主页**：<https://github.com/YY-Nexus/YYC-AI-management>
-- **问题反馈**：<https://github.com/YY-Nexus/YYC-AI-management/issues>
-- **讨论区**：<https://github.com/YY-Nexus/YYC-AI-management/discussions>
-- **邮箱**：<support@yanyu-cloud.com>
+- **项目主页**：<https://github.com/YYC-EasyVizAI/YYC-AI-management>
+- **问题反馈**：<https://github.com/YYC-EasyVizAI/YYC-AI-management/issues>
+- **讨论区**：<https://github.com/YYC-EasyVizAI/YYC-AI-management/discussions>
+- **邮箱**：<admin@0379.email>
 - **文档**：<https://docs.yanyu-cloud.com>
 
 ---
