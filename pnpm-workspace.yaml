@@ -1,8 +1,14 @@
-ignoredBuiltDependencies:
-  - core-js-pure
-  - libpq
-  - unrs-resolver
-
-onlyBuiltDependencies:
-  - '@swc/core'
-  - esbuild
+packages:
+  - app
+  - backend
+  - components
+  - hooks
+  - lib
+  - types
+  - docs
+  - database
+  - scripts
+  - design-system
+  - design-tokens
+  - package-ui
+  - styles
