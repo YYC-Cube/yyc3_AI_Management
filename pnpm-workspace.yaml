@@ -12,3 +12,7 @@ packages:
   - design-tokens
   - package-ui
   - styles
+
+onlyBuiltDependencies:
+  - '@swc/core'
+  - esbuild
