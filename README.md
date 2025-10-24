@@ -93,6 +93,19 @@ YanYu Cloud³ 是一个现代化的企业级智能业务管理系统，集成了
 
 ---
 
+## 🧩 Monorepo 架构说明
+
+本项目采用 pnpm workspace 架构，模块划分如下：
+
+- `app/`：前端入口（Next.js App Router）
+- `backend/`：后端服务（Express + PostgreSQL）
+- `package-ui/`：UI 组件包（供 Storybook 与主应用复用）
+- `design-system/`：设计系统与令牌
+- `scripts/`：部署与测试脚本
+- `docs/`：技术文档与分析报告
+
+使用 `pnpm --filter <模块名> <命令>` 可单独运行模块命令。
+
 ## 🛠 技术栈
 
 ### 前端技术栈
