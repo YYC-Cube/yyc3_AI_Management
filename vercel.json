@@ -1,0 +1,14 @@
+{
+  "build": {
+    "env": {
+      "VERCEL_PNPM_VERSION": "9.0.0"
+    }
+  },
+  "framework": "nextjs",
+  "rootDirectory": "app",
+  "functions": {
+    "api/**/*.ts": {
+      "runtime": "nodejs18.x"
+    }
+  }
+}
