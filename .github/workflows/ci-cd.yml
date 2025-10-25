@@ -218,13 +218,18 @@ jobs:
             const res = await github.request('GET /repos/{owner}/{repo}/commits/{ref}/check-runs', { owner, repo, ref: sha });
             const check = res.data.check_runs?.find(c => c.name === 'Preview Link');
             if (check) {
+              // Try to extract the preview URL from the original check run output
+              const previewUrl = check.output?.summary?.match(/https?:\/\/[^\s]+/)?.[0] || check.output?.text?.match(/https?:\/\/[^\s]+/)?.[0];
+              const summary = previewUrl
+                ? `E2E tests completed successfully.\nPreview URL: ${previewUrl}`
+                : 'E2E tests completed successfully.';
               await github.request('PATCH /repos/{owner}/{repo}/check-runs/{check_run_id}', {
                 owner, repo,
                 check_run_id: check.id,
                 status: 'completed',
                 conclusion: 'success',
                 completed_at: new Date().toISOString(),
-                output: { title: 'Preview verified', summary: 'E2E tests completed successfully.' }
+                output: { title: 'Preview verified', summary }
               });
             } else {
               core.info('Preview Link check-run not found; skipping update.');
