@@ -2,6 +2,13 @@
 
 ![YanYu Cloud³](public/logo.png)
 
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue?logo=typescript)](https://www.typescriptlang.org/)
+[![Next.js](https://img.shields.io/badge/Next.js-14.0-black?logo=next.js)](https://nextjs.org/)
+[![Node.js](https://img.shields.io/badge/Node.js-20.x-green?logo=node.js)](https://nodejs.org/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue?logo=postgresql)](https://www.postgresql.org/)
+[![Redis](https://img.shields.io/badge/Redis-7.x-red?logo=redis)](https://redis.io/)
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 新一代企业级智能业务管理平台 — 集成财务对账、工单管理、实时监控与 AI 智能分析，面向高并发、高可用与可扩展的企业场景。
 
 [功能特性](#-功能特性) • [快速开始](#-快速开始) • [技术栈](#-技术栈) • [API 文档](#-api-接口文档) • [部署指南](#-部署指南) • [安全策略](#-安全策略)
