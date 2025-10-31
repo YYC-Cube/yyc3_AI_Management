@@ -9,9 +9,13 @@
 [![Redis](https://img.shields.io/badge/Redis-7.x-red?logo=redis)](https://redis.io/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
+[![CI/CD Pipeline](https://github.com/YYC-Cube/yyc3_AI_Management/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/YYC-Cube/yyc3_AI_Management/actions/workflows/ci-cd.yml)
+[![Test Gate](https://github.com/YYC-Cube/yyc3_AI_Management/actions/workflows/test-gate.yml/badge.svg)](https://github.com/YYC-Cube/yyc3_AI_Management/actions/workflows/test-gate.yml)
+[![Chromatic](https://github.com/YYC-Cube/yyc3_AI_Management/actions/workflows/chromatic.yml/badge.svg)](https://github.com/YYC-Cube/yyc3_AI_Management/actions/workflows/chromatic.yml)
+
 新一代企业级智能业务管理平台 — 集成财务对账、工单管理、实时监控与 AI 智能分析，面向高并发、高可用与可扩展的企业场景。
 
-[功能特性](#-功能特性) • [快速开始](#-快速开始) • [技术栈](#-技术栈) • [API 文档](#-api-接口文档) • [部署指南](#-部署指南) • [安全策略](#-安全策略)
+[功能特性](#-功能特性) • [快速开始](#-快速开始) • [技术栈](#-技术栈) • [API 文档](#-api-接口文档) • [部署指南](#-部署指南) • [安全策略](#-安全策略) • [CI/CD 工作流](docs/WORKFLOWS.md)
 
 ---
 

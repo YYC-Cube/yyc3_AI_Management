@@ -170,6 +170,21 @@ If tests fail due to PostgreSQL or Redis connection issues:
 
 ## Local Testing
 
+Before running workflows, you can verify your local environment setup using the health check script:
+
+```bash
+npm run workflow-check
+```
+
+This will check:
+- Node.js and npm versions
+- Project structure and dependencies
+- Configuration files (TypeScript, ESLint, etc.)
+- GitHub Actions workflow files
+- Environment configuration
+- Docker and Docker Compose
+- Required services (PostgreSQL, Redis)
+
 To test the workflows locally, you can use [act](https://github.com/nektos/act):
 
 ```bash

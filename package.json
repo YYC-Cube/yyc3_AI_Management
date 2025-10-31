@@ -31,6 +31,7 @@
     "test:ci": "jest --coverage --watchAll=false",
     "test:report": "node scripts/generate-test-report.js",
     "quality-gate": "bash scripts/quality-gate.sh",
+    "workflow-check": "bash scripts/workflow-health-check.sh",
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
