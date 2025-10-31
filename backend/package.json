@@ -15,6 +15,7 @@
     "test:ws": "jest --testMatch='**/__tests__/**/*websocket*'",
     "lint": "eslint src --ext .ts",
     "lint:fix": "eslint src --ext .ts --fix",
+    "type-check": "tsc --noEmit",
     "migrate": "node scripts/run-migrations.js",
     "seed": "node scripts/run-seeds.js"
   },
