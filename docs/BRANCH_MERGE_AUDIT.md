@@ -84,7 +84,7 @@ All feature branches were properly merged through pull requests:
 | PR # | Branch | Merged Date | Status |
 |------|--------|-------------|--------|
 | #4 | copilot/improve-workflow-utility | Oct 31, 2025 | ✅ Merged |
-| #3 | ci-cd-vercel-preview-flow | Oct 25, 2025 | ✅ Merged |
+| #3 | ci-cd-vercel-preview | Oct 25, 2025 | ✅ Merged |
 | #2 | yyc-easyvizai-branch | Oct 15, 2025 | ⚠️ Outdated |
 
 ### Commit Graph Analysis
@@ -135,11 +135,13 @@ After cleanup, verify with:
 git branch -r
 ```
 
-Expected output:
+Expected output (before merging this PR):
 ```
 origin/main
 origin/copilot/merge-branches-to-main
 ```
+
+**Note**: After this PR is merged, also delete `origin/copilot/merge-branches-to-main` to complete the cleanup.
 
 ## Quality Assurance
 
