@@ -186,7 +186,7 @@ jobs:
         run: |
           echo "🚀 All tests passed! Ready for deployment."
           echo "✅ Unit tests: PASSED"
-          echo "✅ Integration tests: PASSED" 
+          echo "✅ Integration tests: PASSED"
           echo "✅ E2E tests: PASSED"
           echo "✅ Security scan: PASSED"
           echo "✅ Coverage threshold: MET"
