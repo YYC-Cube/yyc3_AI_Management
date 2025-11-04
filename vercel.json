@@ -5,7 +5,6 @@
     }
   },
   "framework": "nextjs",
-  "rootDirectory": "app",
   "functions": {
     "api/**/*.ts": {
       "runtime": "nodejs18.x"
