@@ -81,3 +81,8 @@ export function useResponsive(): ResponsiveState {
     windowHeight: windowSize.height,
   }
 }
+
+export function useMobile(): boolean {
+  const { isMobile } = useResponsive()
+  return isMobile
+}
