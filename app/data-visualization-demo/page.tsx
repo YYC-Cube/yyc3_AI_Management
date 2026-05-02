@@ -17,26 +17,52 @@ import { DataVisualizationChart } from "@/components/data-visualization/chart-co
 import { PivotTable } from "@/components/data-visualization/pivot-table";
 import DataVisualizationUtils from "@/lib/data-visualization-utils";
 
+const generateSalesData = () => {
+  const baseData = DataVisualizationUtils.generateMockData(12, [
+    { name: "month", type: "string" },
+    { name: "revenue", type: "number" },
+    { name: "orders", type: "number" },
+    { name: "customers", type: "number" },
+    { name: "profit", type: "number" },
+  ]);
+
+  return baseData.map((item, index) => ({
+    ...item,
+    month: `2024-${String(index + 1).padStart(2, "0")}`,
+    revenue: 75000 + (index * 5000),
+    orders: 250 + (index * 20),
+    customers: 150 + (index * 10),
+    profit: 20000 + (index * 1500),
+  }));
+};
+
+const generateUserAnalyticsData = () => {
+  const baseData = DataVisualizationUtils.generateMockData(50, [
+    { name: "name", type: "string" },
+    { name: "age", type: "number" },
+    { name: "score", type: "number" },
+    { name: "active", type: "boolean" },
+    { name: "joinDate", type: "date" },
+  ]);
+
+  const regions = ["北京", "上海", "广州", "深圳", "杭州"];
+  const departments = ["技术部", "销售部", "市场部", "运营部"];
+
+  return baseData.map((item, index) => ({
+    id: index + 1,
+    name: `用户${index + 1}`,
+    age: 25 + (index % 30),
+    score: 60 + (index % 40),
+    active: index % 3 !== 0,
+    joinDate: item.joinDate,
+    region: regions[index % regions.length],
+    department: departments[index % departments.length],
+  }));
+};
+
 export default function DataVisualizationDemo() {
-  // 生成模拟数据
-  const salesData = useMemo(
-    () =>
-      DataVisualizationUtils.generateMockData(12, [
-        { name: "month", type: "string" },
-        { name: "revenue", type: "number" },
-        { name: "orders", type: "number" },
-        { name: "customers", type: "number" },
-        { name: "profit", type: "number" },
-      ]).map((item, index) => ({
-        ...item,
-        month: `2024-${String(index + 1).padStart(2, "0")}`,
-        revenue: Math.floor(Math.random() * 100000) + 50000,
-        orders: Math.floor(Math.random() * 500) + 100,
-        customers: Math.floor(Math.random() * 300) + 50,
-        profit: Math.floor(Math.random() * 30000) + 10000,
-      })),
-    []
-  );
+  // 使用预生成的模拟数据（避免在渲染期间调用不纯函数）
+  const salesData = useMemo(() => generateSalesData(), []);
 
   const productData = useMemo(
     () => [
@@ -49,30 +75,7 @@ export default function DataVisualizationDemo() {
     []
   );
 
-  const userAnalyticsData = useMemo(
-    () =>
-      DataVisualizationUtils.generateMockData(50, [
-        { name: "name", type: "string" },
-        { name: "age", type: "number" },
-        { name: "score", type: "number" },
-        { name: "active", type: "boolean" },
-        { name: "joinDate", type: "date" },
-      ]).map((item, index) => ({
-        id: index + 1,
-        name: `用户${index + 1}`,
-        age: Math.floor(Math.random() * 50) + 18,
-        score: Math.floor(Math.random() * 100),
-        active: Math.random() > 0.3,
-        joinDate: item.joinDate,
-        region: ["北京", "上海", "广州", "深圳", "杭州"][
-          Math.floor(Math.random() * 5)
-        ],
-        department: ["技术部", "销售部", "市场部", "运营部"][
-          Math.floor(Math.random() * 4)
-        ],
-      })),
-    []
-  );
+  const userAnalyticsData = useMemo(() => generateUserAnalyticsData(), []);
 
   // 表格列定义
   const userColumns: ColumnDef<any>[] = [
