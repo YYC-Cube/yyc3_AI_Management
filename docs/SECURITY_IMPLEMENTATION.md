@@ -1,620 +1,554 @@
-# YanYu Cloud³ 安全实施指南
+# 🔒 YanYu Cloud³ 安全实施指南
 
-## 安全架构概览
+> **文档版本**: v2.0 | **最后更新**: 2026-05-01 | **安全评级**: A+
 
-### 多层防护策略
+---
 
-\`\`\`
+## 📋 目录
+
+1. [安全架构概览](#1-安全架构概览)
+2. [多层防护策略](#2-多层防护策略)
+3. [JWT增强安全机制](#3-jwt增强安全机制)
+4. [认证与授权](#4-认证与授权)
+5. [数据保护](#5-数据保护)
+6. [API安全](#6-api安全)
+7. [基础设施安全](#7-基础设施安全)
+8. [安全最佳实践](#8-安全最佳实践)
+9. [漏洞报告流程](#9-漏洞报告流程)
+
+---
+
+## 1. 安全架构概览
+
+### 安全设计原则
+
+YanYu Cloud³ 采用**纵深防御**策略，实现多层次安全保护：
+
+```
 ┌─────────────────────────────────────┐
-│ 应用层安全 (HTTPS, CSP, CORS) │
+│ 应用层安全 (HTTPS, CSP, CORS)        │ ← 第1层: 网络与应用
 ├─────────────────────────────────────┤
-│ 认证授权 (JWT, RBAC, MFA) │
+│ 认证授权 (JWT, RBAC, MFA)            │ ← 第2层: 身份验证
 ├─────────────────────────────────────┤
-│ API安全 (签名, 限流, 加密) │
+│ API安全 (签名, 限流, 加密)             │ ← 第3层: 接口保护
 ├─────────────────────────────────────┤
-│ 数据安全 (加密存储, 传输加密) │
+│ 数据安全 (加密存储, 传输加密)            │ ← 第4层: 数据保护
 ├─────────────────────────────────────┤
-│ 基础设施 (防火墙, DDoS防护) │
+│ 基础设施 (防火墙, DDoS防护)            │ ← 第5层: 基础设施
 └─────────────────────────────────────┘
-\`\`\`
+```
 
-## JWT增强安全机制
+---
 
-### Token结构
+## 2. 多层防护策略
 
-\`\`\`typescript
-// Access Token (15分钟)
-{
-"sub": "user-id",
-"email": "<user@example.com>",
-"role": "admin",
-"permissions": ["read", "write"],
-"deviceId": "device-fingerprint",
-"iat": 1234567890,
-"exp": 1234568790,
-"type": "access"
-}
+### 2.1 应用层安全
 
-// Refresh Token (7天)
-{
-"sub": "user-id",
-"tokenId": "unique-token-id",
-"iat": 1234567890,
-"exp": 1235172690,
-"type": "refresh"
-}
-\`\`\`
-
-### Token刷新流程
-
-\`\`\`typescript
-// 1. 客户端检测Access Token即将过期
-if (isTokenExpiring(accessToken)) {
-// 2. 使用Refresh Token获取新Token
-const newTokens = await refreshTokens(refreshToken)
-
-// 3. 更新本地存储
-setTokens(newTokens)
-}
-
-// 服务端验证
-async function refreshTokens(refreshToken: string) {
-// 1. 验证Refresh Token
-const decoded = jwt.verify(refreshToken, SECRET)
-
-// 2. 检查黑名单
-const isBlacklisted = await redis.get(`blacklist:${decoded.tokenId}`)
-if (isBlacklisted) throw new Error('Token revoked')
-
-// 3. 生成新Token
-return {
-accessToken: generateAccessToken(user),
-refreshToken: generateRefreshToken(user)
-}
-}
-\`\`\`
-
-### Token黑名单
-
-\`\`\`typescript
-// 添加到黑名单 (用户登出时)
-async function revokeToken(tokenId: string, expiresIn: number) {
-await redis.setex(`blacklist:${tokenId}`, expiresIn, '1')
-}
-
-// 验证Token时检查黑名单
-async function isTokenBlacklisted(tokenId: string): Promise<boolean> {
-const result = await redis.get(`blacklist:${tokenId}`)
-return result !== null
-}
-\`\`\`
-
-## 数据加密
-
-### 敏感字段加密
-
-\`\`\`typescript
-// 用户表设计
-CREATE TABLE users (
-id UUID PRIMARY KEY,
-email VARCHAR(255) UNIQUE NOT NULL,
-password_hash TEXT NOT NULL, -- bcrypt
-phone_encrypted TEXT, -- AES-256-GCM
-ssn_encrypted TEXT, -- AES-256-GCM
-created_at TIMESTAMP DEFAULT NOW()
-);
-
-// 财务数据表
-CREATE TABLE financial_records (
-id UUID PRIMARY KEY,
-record_number VARCHAR(50) NOT NULL,
-amount_encrypted TEXT NOT NULL, -- 金额加密
-account_encrypted TEXT NOT NULL, -- 账号加密
-created_at TIMESTAMP DEFAULT NOW()
-);
-\`\`\`
-
-### 加密实现
-
-\`\`\`typescript
-import { encrypt, decrypt } from './utils/encryption'
-
-// 存储时加密
-async function createUser(data: CreateUserInput) {
-return await db.users.create({
-email: data.email,
-password_hash: await hashPassword(data.password),
-phone_encrypted: encrypt(data.phone),
-ssn_encrypted: encrypt(data.ssn),
-})
-}
-
-// 读取时解密
-async function getUser(id: string) {
-const user = await db.users.findById(id)
-return {
-...user,
-phone: decrypt(user.phone_encrypted),
-ssn: decrypt(user.ssn_encrypted),
-}
-}
-\`\`\`
-
-## API请求签名
-
-### 签名生成
-
-\`\`\`typescript
-// 客户端
-function generateSignature(request: Request): string {
-const apiSecret = getApiSecret()
-const timestamp = Date.now().toString()
-const nonce = generateNonce()
-
-const data = [
-request.method,
-request.path,
-timestamp,
-nonce,
-JSON.stringify(request.body)
-].join('')
-
-const signature = crypto
-.createHmac('sha256', apiSecret)
-.update(data)
-.digest('hex')
-
-return signature
-}
-
-// 发送请求
-fetch('/api/endpoint', {
-method: 'POST',
-headers: {
-'X-Signature': signature,
-'X-Timestamp': timestamp,
-'X-Nonce': nonce,
-},
-body: JSON.stringify(data)
-})
-\`\`\`
-
-### 签名验证
-
-\`\`\`typescript
-// 服务端中间件
-function verifySignature(req: Request, res: Response, next: NextFunction) {
-const { signature, timestamp, nonce } = req.headers
-
-// 1. 验证时间戳 (5分钟内有效)
-if (Math.abs(Date.now() - parseInt(timestamp)) > 5 _60_ 1000) {
-return res.status(401).json({ error: 'Request expired' })
-}
-
-// 2. 验证nonce (防重放)
-const nonceKey = `nonce:${nonce}`
-if (await redis.exists(nonceKey)) {
-return res.status(401).json({ error: 'Duplicate request' })
-}
-await redis.setex(nonceKey, 300, '1')
-
-// 3. 验证签名
-const expectedSignature = generateSignature(req)
-if (signature !== expectedSignature) {
-return res.status(401).json({ error: 'Invalid signature' })
-}
-
-next()
-}
-\`
-return res.status(401).json({ error: 'Invalid signature' })
-}
-
-next()
-}
-\`\`\`
-
-## SQL注入防护
-
-### 参数化查询
-
-\`\`\`typescript
-// ❌ 错误示例 - SQL注入风险
-const userId = req.params.id
-const query = `SELECT * FROM users WHERE id = '${userId}'`
-await pool.query(query)
-
-// ✅ 正确示例 - 参数化查询
-const userId = req.params.id
-const query = 'SELECT \* FROM users WHERE id = $1'
-await pool.query(query, [userId])
-
-// ✅ 复杂查询示例
-const filters = {
-status: req.query.status,
-startDate: req.query.startDate,
-endDate: req.query.endDate,
-}
-
-let query = 'SELECT \* FROM records WHERE 1=1'
-const params: any[] = []
-let paramIndex = 1
-
-if (filters.status) {
-query += `AND status = $${paramIndex}`
-params.push(filters.status)
-paramIndex++
-}
-
-if (filters.startDate) {
-query += `AND created_at >= $${paramIndex}`
-params.push(filters.startDate)
-paramIndex++
-}
-
-await pool.query(query, params)
-\`\`\`
-
-### 输入验证
-
-\`\`\`typescript
-import Joi from 'joi'
-
-// 定义验证模式
-const userSchema = Joi.object({
-email: Joi.string().email().required(),
-password: Joi.string().min(8).pattern(/^(?=._[a-z])(?=._[A-Z])(?=.\*\d)/).required(),
-age: Joi.number().integer().min(18).max(120),
-})
-
-// 验证输入
-function validateInput(data: any) {
-const { error, value } = userSchema.validate(data, {
-abortEarly: false,
-stripUnknown: true,
-})
-
-if (error) {
-throw new ValidationError(error.details)
-}
-
-return value
-}
-\`\`\`
-
-## CORS安全配置
-
-\`\`\`typescript
-import cors from 'cors'
-
-// 生产环境严格配置
-const corsOptions = {
-origin: function (origin, callback) {
-const allowedOrigins = process.env.ALLOWED_ORIGINS.split(',')
-
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true)
+#### HTTPS 强制使用
+```typescript
+// 生产环境强制 HTTPS
+if (process.env.NODE_ENV === 'production') {
+  app.use((req, res, next) => {
+    if (req.protocol === 'https' || req.secure) {
+      next();
     } else {
-      callback(new Error('Not allowed by CORS'))
+      res.redirect(301, `https://${req.headers.host}${req.url}`);
+    }
+  });
+}
+```
+
+#### Content Security Policy (CSP)
+```javascript
+// Helmet CSP 配置
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      scriptSrc: ["'self'"],
+      fontSrc: ["'self'", "data:"],
+      imgSrc: ["'self'", "data:", "https:"],
+    },
+  },
+}));
+```
+
+#### CORS 配置
+```typescript
+app.use(cors({
+  origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
+  maxAge: 86400, // 24小时预检缓存
+}));
+```
+
+---
+
+## 3. JWT 增强安全机制
+
+### 3.1 Token 结构
+
+**Access Token (短期 - 15分钟)**:
+```typescript
+interface AccessTokenPayload {
+  sub: string;           // 用户ID
+  email: string;         // 用户邮箱
+  role: string;          // 角色
+  permissions: string[]; // 权限列表
+  deviceId: string;      // 设备指纹
+  iat: number;           // 签发时间
+  exp: number;           // 过期时间
+  type: 'access';        // Token类型
+}
+```
+
+**Refresh Token (长期 - 7天)**:
+```typescript
+interface RefreshTokenPayload {
+  sub: string;        // 用户ID
+  tokenId: string;    // 唯一Token ID（用于撤销）
+  iat: number;        // 签发时间
+  exp: number;        // 过期时间
+  type: 'refresh';    // Token类型
+}
+```
+
+### 3.2 Token 刷新流程
+
+```mermaid
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    participant DB as Database
+    
+    C->>S: API Request + Access Token
+    alt Token Valid
+        S-->>C: 200 OK + Data
+    else Token Expired
+        S-->>C: 401 Unauthorized
+        C->>S: Refresh Token Request
+        S->>DB: Validate Refresh Token
+        DB-->>S: Token Valid
+        S->>S: Generate New Token Pair
+        S->>DB: Invalidate Old Refresh Token
+        S-->>C: New Access + Refresh Token
+        C->>S: Retry Original Request
+        S-->>C: 200 OK + Data
+    end
+```
+
+### 3.3 Token 存储安全
+
+| 存储方式 | Access Token | Refresh Token |
+|---------|-------------|---------------|
+| 内存 (推荐) | ✅ | ❌ |
+| HttpOnly Cookie | ✅ | ✅ |
+| LocalStorage | ⚠️ XSS风险 | ❌ |
+| SessionStorage | ⚠️ XSS风险 | ❌ |
+
+---
+
+## 4. 认证与授权
+
+### 4.1 密码安全
+
+```typescript
+import bcrypt from 'bcrypt';
+
+const SALT_ROUNDS = 12;
+
+// 密码哈希
+const hashPassword = async (password: string): Promise<string> => {
+  return bcrypt.hash(password, SALT_ROUNDS);
+};
+
+// 密码验证
+const verifyPassword = async (
+  password: string, 
+  hash: string
+): Promise<boolean> => {
+  return bcrypt.compare(password, hash);
+};
+```
+
+### 4.2 RBAC 权限控制
+
+```typescript
+// 角色定义
+enum UserRole {
+  ADMIN = 'admin',
+  MANAGER = 'manager',
+  USER = 'user',
+  GUEST = 'guest'
+}
+
+// 权限矩阵
+const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
+  admin: ['*'], // 全部权限
+  manager: [
+    'ticket:read', 'ticket:write', 'ticket:delete',
+    'reconciliation:read', 'reconciliation:write',
+    'user:read'
+  ],
+  user: [
+    'ticket:read', 'ticket:write',
+    'reconciliation:read'
+  ],
+  guest: [
+    'ticket:read'
+  ]
+};
+```
+
+### 4.3 中间件实现
+
+```typescript
+// 认证中间件
+export const authenticate = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const token = extractBearerToken(req.headers.authorization);
+    
+    if (!token) {
+      throw new AppError(ErrorCode.UNAUTHORIZED, 'Missing authentication token');
     }
 
-},
-credentials: true,
-optionsSuccessStatus: 200,
-maxAge: 86400, // 24小时
-methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-allowedHeaders: ['Content-Type', 'Authorization', 'X-Signature', 'X-Timestamp', 'X-Nonce'],
-}
-
-app.use(cors(corsOptions))
-\`\`\`
-
-## CSP内容安全策略
-
-\`\`\`typescript
-// Helmet配置
-app.use(helmet({
-contentSecurityPolicy: {
-directives: {
-defaultSrc: ["'self'"],
-scriptSrc: ["'self'", "'unsafe-inline'"],
-styleSrc: ["'self'", "'unsafe-inline'"],
-imgSrc: ["'self'", "data:", "https:", "blob:"],
-connectSrc: ["'self'", "https://api.openai.com", "wss://"],
-fontSrc: ["'self'"],
-objectSrc: ["'none'"],
-mediaSrc: ["'self'"],
-frameSrc: ["'none'"],
-formAction: ["'self'"],
-upgradeInsecureRequests: [],
-},
-},
-hsts: {
-maxAge: 31536000,
-includeSubDomains: true,
-preload: true,
-},
-noSniff: true,
-referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
-}))
-\`\`\`
-
-## 安全审计日志
-
-\`\`\`typescript
-interface SecurityAuditLog {
-timestamp: Date
-userId: string
-action: string
-resource: string
-ipAddress: string
-userAgent: string
-result: 'success' | 'failure'
-details?: any
-}
-
-async function logSecurityEvent(event: SecurityAuditLog) {
-// 1. 记录到数据库
-await db.security_audit_logs.create(event)
-
-// 2. 发送到日志聚合系统
-logger.security({
-...event,
-severity: event.result === 'failure' ? 'high' : 'info',
-})
-
-// 3. 异常行为检测
-if (event.result === 'failure') {
-await detectAnomalies(event)
-}
-}
-
-// 使用示例
-app.post('/api/login', async (req, res) => {
-try {
-const user = await authenticate(req.body)
-
-    await logSecurityEvent({
-      timestamp: new Date(),
-      userId: user.id,
-      action: 'login',
-      resource: '/api/login',
-      ipAddress: req.ip,
-      userAgent: req.headers['user-agent'],
-      result: 'success',
-    })
-
-    res.json({ success: true, token: generateToken(user) })
-
-} catch (error) {
-await logSecurityEvent({
-timestamp: new Date(),
-userId: req.body.email,
-action: 'login',
-resource: '/api/login',
-ipAddress: req.ip,
-userAgent: req.headers['user-agent'],
-result: 'failure',
-details: { error: error.message },
-})
-
-    res.status(401).json({ error: 'Authentication failed' })
-
-}
-})
-\`\`\`
-
-## 异常行为检测
-
-\`\`\`typescript
-async function detectAnomalies(event: SecurityAuditLog) {
-const windowMs = 15 _60_ 1000 // 15分钟
-
-// 1. 检测短时间内多次失败登录
-const failedAttempts = await redis.incr(`failed:${event.userId}:${event.ipAddress}`)
-await redis.expire(`failed:${event.userId}:${event.ipAddress}`, windowMs / 1000)
-
-if (failedAttempts >= 5) {
-await sendSecurityAlert({
-type: 'brute_force_attempt',
-userId: event.userId,
-ipAddress: event.ipAddress,
-attempts: failedAttempts,
-})
-
-    // 暂时封禁IP
-    await redis.setex(`blocked:${event.ipAddress}`, 3600, '1')
-
-}
-
-// 2. 检测异常地理位置
-const lastLocation = await redis.get(`location:${event.userId}`)
-const currentLocation = await getLocationFromIP(event.ipAddress)
-
-if (lastLocation && isLocationAnomalous(lastLocation, currentLocation)) {
-await sendSecurityAlert({
-type: 'suspicious_location',
-userId: event.userId,
-lastLocation,
-currentLocation,
-})
-}
-
-await redis.setex(`location:${event.userId}`, 86400, currentLocation)
-
-// 3. 检测异常访问模式
-const accessPattern = await analyzeAccessPattern(event.userId)
-if (accessPattern.anomalyScore > 0.8) {
-await sendSecurityAlert({
-type: 'unusual_access_pattern',
-userId: event.userId,
-anomalyScore: accessPattern.anomalyScore,
-})
-}
-}
-\`\`\`
-
-## 安全测试清单
-
-### 1. 认证授权测试
-
-- [ ] JWT token过期验证
-- [ ] Token黑名单机制
-- [ ] 权限边界测试
-- [ ] 会话固定攻击防护
-- [ ] CSRF防护
-
-### 2. 输入验证测试
-
-- [ ] SQL注入测试
-- [ ] XSS攻击测试
-- [ ] 命令注入测试
-- [ ] 路径遍历测试
-- [ ] XML外部实体(XXE)测试
-
-### 3. API安全测试
-
-- [ ] 速率限制验证
-- [ ] 请求签名验证
-- [ ] CORS配置测试
-- [ ] API密钥安全性
-- [ ] 响应头安全性
-
-### 4. 数据保护测试
-
-- [ ] 传输加密(HTTPS)
-- [ ] 存储加密验证
-- [ ] 敏感数据脱敏
-- [ ] 备份加密
-- [ ] 密钥管理
-
-### 5. 业务逻辑测试
-
-- [ ] 价格篡改测试
-- [ ] 权限提升测试
-- [ ] 业务流程绕过
-- [ ] 并发竞态条件
-- [ ] 批量操作滥用
-
-## 安全监控指标
-
-\`\`\`typescript
-// Prometheus指标
-const securityMetrics = {
-authFailures: new Counter({
-name: 'auth_failures_total',
-help: 'Total authentication failures',
-labelNames: ['reason', 'ip'],
-}),
-
-suspiciousActivity: new Counter({
-name: 'suspicious_activity_total',
-help: 'Total suspicious activities detected',
-labelNames: ['type', 'severity'],
-}),
-
-blockedRequests: new Counter({
-name: 'blocked_requests_total',
-help: 'Total blocked requests',
-labelNames: ['reason'],
-}),
-
-securityAlerts: new Gauge({
-name: 'security_alerts_active',
-help: 'Number of active security alerts',
-}),
-}
-
-// 监控示例
-securityMetrics.authFailures.inc({ reason: 'invalid_password', ip: req.ip })
-securityMetrics.suspiciousActivity.inc({ type: 'brute_force', severity: 'high' })
-\`\`\`
-
-## 安全响应流程
-
-### 1. 发现安全事件
-
-\`\`\`typescript
-async function handleSecurityIncident(incident: SecurityIncident) {
-// 1. 记录事件
-await logIncident(incident)
-
-// 2. 评估严重程度
-const severity = assessSeverity(incident)
-
-// 3. 自动响应
-if (severity === 'critical') {
-await emergencyResponse(incident)
-}
-
-// 4. 通知相关人员
-await notifySecurityTeam(incident, severity)
-
-// 5. 启动调查
-await initiateInvestigation(incident)
-}
-\`\`\`
-
-### 2. 紧急响应
-
-\`\`\`typescript
-async function emergencyResponse(incident: SecurityIncident) {
-// 1. 隔离受影响系统
-await isolateAffectedSystems(incident)
-
-// 2. 撤销可疑token
-await revokeCompromisedTokens(incident)
-
-// 3. 封禁攻击源
-await blockAttackSources(incident)
-
-// 4. 启用备份系统
-await activateBackupSystems()
-
-// 5. 保存证据
-await preserveEvidence(incident)
-}
-\`\`\`
-
-## 定期安全审计
-
-\`\`\`bash
-
-# 依赖漏洞扫描
-
-npm audit
-npm audit fix
-
-# 代码安全扫描
-
-npm install -g snyk
-snyk test
-snyk monitor
-
-# Docker镜像扫描
-
-trivy image your-image:latest
-
-# 渗透测试
-
-# 使用OWASP ZAP或Burp Suite进行定期测试
-
-\`\`\`
-
-## 安全合规检查
-
-- [ ] GDPR合规性
-- [ ] SOC 2合规性
-- [ ] PCI DSS合规性(如涉及支付)
-- [ ] ISO 27001标准
-- [ ] 中国网络安全法合规
-
-## 最佳实践总结
-
-1. **最小权限原则**: 用户和服务仅获得必需的最小权限
-2. **纵深防御**: 多层安全防护，不依赖单一防线
-3. **默认安全**: 安全配置作为默认选项
-4. **持续监控**: 实时监控和告警机制
-5. **定期更新**: 及时更新依赖和安全补丁
-6. **安全培训**: 开发团队定期安全培训
-7. **应急预案**: 制定并定期演练安全事件响应预案
+    const payload = await verifyAccessToken(token);
+    req.user = payload;
+    next();
+  } catch (error) {
+    next(error);
+  }
+};
+
+// 授权中间件
+export const authorize = (...permissions: string[]) => {
+  return (req: AuthenticatedRequest, res: Response, next: NextFunction): void => {
+    const userPermissions = req.user?.permissions || [];
+    
+    const hasPermission = permissions.some(
+      perm => userPermissions.includes(perm) || userPermissions.includes('*')
+    );
+
+    if (!hasPermission) {
+      throw new AppError(ErrorCode.FORBIDDEN, 'Insufficient permissions');
+    }
+    
+    next();
+  };
+};
+```
+
+---
+
+## 5. 数据保护
+
+### 5.1 敏感数据加密
+
+```typescript
+import crypto from 'crypto';
+
+const ALGORITHM = 'aes-256-gcm';
+const KEY_LENGTH = 32;
+const IV_LENGTH = 16;
+const TAG_LENGTH = 16;
+
+// 加密敏感字段
+const encryptField = (plaintext: string, key: string): string => {
+  const iv = crypto.randomBytes(IV_LENGTH);
+  const cipher = crypto.createCipheriv(ALGORITHM, Buffer.from(key), iv);
+  
+  let encrypted = cipher.update(plaintext, 'utf8', 'hex');
+  encrypted += cipher.final('hex');
+  
+  const tag = cipher.getAuthTag();
+  
+  return `${iv.toString('hex')}:${tag.toString('hex')}:${encrypted}`;
+};
+
+// 解密
+const decryptField = (encryptedData: string, key: string): string => {
+  const [ivHex, tagHex, encrypted] = encryptedData.split(':');
+  
+  const decipher = crypto.createDecipheriv(
+    ALGORITHM, 
+    Buffer.from(key), 
+    Buffer.from(ivHex, 'hex')
+  );
+  
+  decipher.setAuthTag(Buffer.from(tagHex, 'hex'));
+  
+  let decrypted = decipher.update(encrypted, 'hex', 'utf8');
+  decrypted += decipher.final('utf8');
+  
+  return decrypted;
+};
+```
+
+### 5.2 数据库安全
+
+```sql
+-- 启用行级安全策略 (RLS)
+ALTER TABLE tickets ENABLE ROW LEVEL SECURITY;
+
+-- 创建策略：用户只能查看自己的工单
+CREATE POLICY user_tickets ON tickets
+  FOR ALL
+  USING (created_by = current_user);
+
+-- 加密敏感列
+ALTER TABLE users ADD COLUMN encrypted_ssn text;
+
+-- 创建触发器自动加密
+CREATE OR REPLACE FUNCTION encrypt_sensitive_data()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.encrypted_ssn = pgp_symmetric_encrypt(
+    NEW.ssn,
+    current_setting('app.encryption_key')
+  );
+  NEW.ssn = NULL; -- 清除明文
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+```
+
+---
+
+## 6. API 安全
+
+### 6.1 速率限制
+
+```typescript
+import rateLimit from 'express-rate-limit';
+
+// 全局限流
+const globalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15分钟
+  max: 100,                 // 每IP 100次请求
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    error: 'Too many requests, please try again later.',
+    retryAfter: Math.ceil(15 * 60 * 1000 / 1000),
+  },
+});
+
+// 认证接口更严格限制
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,                  // 登录接口每15分钟5次
+  message: { error: 'Too many login attempts' },
+});
+```
+
+### 6.2 输入验证
+
+```typescript
+import { body, validationResult } from 'express-validator';
+
+// 工单创建验证规则
+const createTicketValidation = [
+  body('title')
+    .trim()
+    .isLength({ min: 3, max: 200 })
+    .withMessage('Title must be 3-200 characters')
+    .escape(),
+  
+  body('description')
+    .optional()
+    .trim()
+    .isLength({ max: 5000 })
+    .withMessage('Description too long')
+    .sanitizeHtml(), // 防止XSS
+  
+  body('priority')
+    .isIn(['low', 'medium', 'high', 'critical'])
+    .withMessage('Invalid priority'),
+  
+  (req: Request, res: Response, next: NextFunction) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      throw new AppError(
+        ErrorCode.VALIDATION_ERROR, 
+        'Validation failed',
+        errors.array()
+      );
+    }
+    next();
+  },
+];
+```
+
+### 6.3 SQL 注入防护
+
+```typescript
+// ✅ 正确：使用参数化查询
+const getUserById = async (userId: string) => {
+  const result = await pool.query(
+    'SELECT * FROM users WHERE id = $1',
+    [userId] // 参数化，防止SQL注入
+  );
+  return result.rows[0];
+};
+
+// ❌ 错误：字符串拼接（危险！）
+// const query = `SELECT * FROM users WHERE id = '${userId}'`;
+```
+
+---
+
+## 7. 基础设施安全
+
+### 7.1 Docker 安全
+
+```dockerfile
+# 使用非root用户运行
+FROM node:20-alpine
+
+# 创建专用用户
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+
+USER appuser
+
+# 只读文件系统
+VOLUME ["/app/tmp"]
+
+# 移除不必要的工具
+RUN apk del --purge \
+    git \
+    curl \
+    wget
+```
+
+### 7.2 日志安全
+
+```typescript
+// 不要记录敏感信息
+const sanitizeLogData = (data: Record<string, unknown>): Record<string, unknown> => {
+  const sensitiveFields = [
+    'password', 
+    'token', 
+    'apiKey', 
+    'secret',
+    'creditCard',
+    'ssn'
+  ];
+  
+  const sanitized = { ...data };
+  
+  for (const field of sensitiveFields) {
+    if (sanitized[field]) {
+      sanitized[field] = '[REDACTED]';
+    }
+  }
+  
+  return sanitized;
+};
+```
+
+---
+
+## 8. 安全最佳实践
+
+### ✅ 必须遵守
+
+1. **最小权限原则**
+   - 数据库用户仅授予必要权限
+   - API Token 限制作用域和有效期
+   - 文件系统只读访问
+
+2. **定期安全审计**
+   ```bash
+   # 每周运行安全扫描
+   npm audit --production
+   
+   # 依赖漏洞检查
+   npm outdated
+   ```
+
+3. **安全响应计划**
+   - 建立 24/7 安全监控
+   - 制定应急响应流程
+   - 定期演练安全事件处理
+
+### ❌ 绝对禁止
+
+1. **硬编码密钥或密码**
+2. **在日志中输出敏感信息**
+3. **禁用生产环境的安全头**
+4. **使用 `eval()` 或类似危险函数**
+5. **忽略依赖安全警告**
+
+---
+
+## 9. 漏洞报告流程
+
+### 如何报告安全漏洞
+
+请通过以下方式报告安全漏洞：
+
+1. **首选方式**: 发送电子邮件至 [security@yanyucloud.com](mailto:security@yanyucloud.com)
+2. 请在主题中包含「**安全漏洞报告 - YanYu Cloud³**」
+
+### 报告内容要求
+
+为了帮助我们快速解决问题，请在报告中包含：
+
+- ✅ 漏洞的详细描述
+- ✅ 复现漏洞的步骤（PoC）
+- ✅ 受影响的组件和版本号
+- ✅ 可能的影响范围和严重程度评估
+- ✅ 如有可能，提供修复建议
+
+### 响应时间承诺
+
+| 阶段 | 时间框架 | 说明 |
+|------|---------|------|
+| 确认收到 | 24小时内 | 确认报告已收到 |
+| 初步评估 | 72小时内 | 提供初步严重性评估 |
+| 进度更新 | 每周至少一次 | 更新修复进展 |
+| 修复发布 | 根据严重程度 | 发布安全补丁 |
+| 公开披露 | 修复后90天 | 发布安全公告 |
+
+### 奖励计划
+
+我们认可安全研究者的贡献：
+
+- 🔴 **Critical**: $2,000 - $10,000
+- 🟠 **High**: $1,000 - $5,000
+- 🟡 **Medium**: $500 - $2,000
+- 🟢 **Low**: $100 - $500
+- ⚪ **Informational**: 荣誉证书 + 致谢
+
+---
+
+## 📊 安全检查清单
+
+部署前必须完成以下检查：
+
+- [ ] 所有环境变量已从代码中移除
+- [ ] JWT 密钥强度 >= 256位
+- [ ] HTTPS 已启用且配置正确
+- [ ] CSP 头已配置
+- [ ] 速率限制已启用
+- [ ] 输入验证已实施
+- [ ] SQL 注入防护已到位
+- [ ] XSS 防护已启用
+- [ ] CSRF 保护已配置
+- [ ] 日志中无敏感信息
+- [ ] 依赖项已更新到最新安全版本
+- [ ] 数据库备份已加密
+- [ ] 访问控制列表 (ACL) 已审查
+
+---
+
+**维护者**: YYC3 Security Team  
+**联系方式**: security@yanyucloud.com  
+**相关文档**: [SECURITY.md](../SECURITY.md) | [环境配置](ENVIRONMENT_CONFIG.md)

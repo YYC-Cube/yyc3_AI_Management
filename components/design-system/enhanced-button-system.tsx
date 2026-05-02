@@ -7,10 +7,11 @@ import { Loader2 } from "lucide-react"
 
 interface EnhancedButtonProps {
   children: ReactNode
-  variant?: "default" | "primary" | "secondary" | "ghost" | "accent" | "traditional"
-  size?: "sm" | "md" | "lg"
+  variant?: "default" | "primary" | "secondary" | "ghost" | "accent" | "traditional" | "outline"
+  size?: "default" | "sm" | "lg"
   loading?: boolean
   glowEffect?: boolean
+  soundType?: string
   className?: string
   onClick?: () => void
   disabled?: boolean
@@ -26,12 +27,13 @@ const variantClasses = {
     "bg-gradient-to-r from-accent-500 to-accent-600 hover:from-accent-600 hover:to-accent-700 text-white shadow-lg hover:shadow-xl",
   traditional:
     "bg-gradient-to-r from-traditional-azure to-traditional-jade hover:from-traditional-azure/90 hover:to-traditional-jade/90 text-white shadow-lg hover:shadow-xl",
+  outline: "bg-transparent hover:bg-secondary-50 text-secondary-700 border-2 border-secondary-300",
 }
 
 export function EnhancedButton({
   children,
   variant = "default",
-  size = "md",
+  size = "default",
   loading = false,
   glowEffect = false,
   className,

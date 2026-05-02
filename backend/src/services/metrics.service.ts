@@ -1,6 +1,5 @@
 import { Counter, Gauge, Histogram, Registry, collectDefaultMetrics } from 'prom-client';
 import { logger } from '../config/logger';
-import { redis } from '../config/redis';
 import { pool } from '../config/database';
 
 /**
@@ -8,15 +7,15 @@ import { pool } from '../config/database';
  */
 export class MetricsService {
   private registry: Registry;
-  private httpRequestsTotal!: Counter<any>;
-  private httpRequestDurationSeconds!: Histogram<any>;
-  private databaseQueryDurationSeconds!: Histogram<any>;
-  private activeUsers!: Gauge<any>;
-  private activeTickets!: Gauge<any>;
-  private cacheHitRate!: Gauge<any>;
-  private databaseConnections!: Gauge<any>;
-  private memoryUsage!: Gauge<any>;
-  private uptime!: Gauge<any>;
+  private httpRequestsTotal!: Counter<string>;
+  private httpRequestDurationSeconds!: Histogram<string>;
+  private databaseQueryDurationSeconds!: Histogram<string>;
+  private activeUsers!: Gauge<string>;
+  private activeTickets!: Gauge<string>;
+  private cacheHitRate!: Gauge<string>;
+  private databaseConnections!: Gauge<string>;
+  private memoryUsage!: Gauge<string>;
+  private uptime!: Gauge<string>;
 
   constructor() {
     this.registry = new Registry();

@@ -5,6 +5,28 @@ import { logger } from "../config/logger"
 import { aiAnalysisTotal, aiAnalysisErrors, aiAnalysisLatency } from "../config/metrics"
 import type { AiAnalysisRequest, AiAnalysisResponse } from "../types/ai-analysis"
 
+interface TrendAnalysisResult {
+  trends: Array<{ period: string; count: number; change: number }>
+  insights: Array<{ type: string; description: string; severity: string }>
+  recommendations: Array<{ action: string; priority: string; impact: string }>
+}
+
+interface ExceptionItem {
+  exceptionType?: string
+  severity?: string
+  customerName?: string
+}
+
+interface GroupableItem {
+  [key: string]: unknown
+}
+
+interface ActionItem {
+  action?: string
+  priority?: string
+  estimatedImpact?: string
+}
+
 export class AiAnalysisService {
   private openaiService: OpenAIService
   private promptService: PromptTemplatesService
@@ -23,7 +45,7 @@ export class AiAnalysisService {
   /**
    * 🔧 安全的 JSON 解析
    */
-  private safeJsonParse<T = any>(jsonString: string, fallback: Partial<T> = {}): T {
+  private safeJsonParse<T = unknown>(jsonString: string, fallback: Partial<T> = {}): T {
     try {
       return JSON.parse(jsonString)
     } catch (error) {
@@ -107,15 +129,16 @@ export class AiAnalysisService {
       })
 
       return result
-    } catch (error: any) {
+    } catch (error: unknown) {
       const duration = (Date.now() - startTime) / 1000
       aiAnalysisTotal.inc({ status: "error", confidence_level: "unknown" })
-      aiAnalysisErrors.inc({ error_type: error.message.includes("rate limit") ? "rate_limit" : "api_error" })
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      aiAnalysisErrors.inc({ error_type: errorMessage.includes("rate limit") ? "rate_limit" : "api_error" })
       aiAnalysisLatency.observe(duration)
 
       logger.error("AI analysis failed", {
         recordId: request.recordId,
-        error: error.message,
+        error: errorMessage,
         duration,
       })
 
@@ -192,7 +215,7 @@ export class AiAnalysisService {
   /**
    * 分析异常趋势
    */
-  async analyzeTrends(timeRange: { start: Date; end: Date }): Promise<any> {
+  async analyzeTrends(timeRange: { start: Date; end: Date }): Promise<TrendAnalysisResult> {
     const exceptions = await this.reconciliationService.getExceptions({
       startDate: timeRange.start.toISOString(),
       endDate: timeRange.end.toISOString(),
@@ -201,9 +224,9 @@ export class AiAnalysisService {
 
     const summary = {
       totalExceptions: exceptions.total,
-      exceptionsByType: this.groupBy(exceptions.exceptions, "exceptionType"),
-      exceptionsBySeverity: this.groupBy(exceptions.exceptions, "severity"),
-      topCustomers: this.getTopCustomers(exceptions.exceptions, 10),
+      exceptionsByType: this.groupBy(exceptions.exceptions as unknown as GroupableItem[], "exceptionType"),
+      exceptionsBySeverity: this.groupBy(exceptions.exceptions as unknown as GroupableItem[], "severity"),
+      topCustomers: this.getTopCustomers(exceptions.exceptions as unknown as ExceptionItem[], 10),
       timeRange: {
         start: timeRange.start.toISOString().split("T")[0],
         end: timeRange.end.toISOString().split("T")[0],
@@ -225,20 +248,21 @@ export class AiAnalysisService {
     })
   }
 
-  private validateConfidence(confidence: any): number {
+  private validateConfidence(confidence: unknown): number {
     const num = Number(confidence)
     if (Number.isNaN(num)) return 50
     return Math.max(0, Math.min(100, num))
   }
 
-  private validateAction(action: any): {
+  private validateAction(action: ActionItem): {
     action: string
     priority: "high" | "medium" | "low"
     estimatedImpact: string
   } {
+    const priority: "high" | "medium" | "low" = ["high", "medium", "low"].includes(action.priority || "") ? (action.priority as "high" | "medium" | "low") : "medium";
     return {
       action: String(action.action || "未指定行动"),
-      priority: ["high", "medium", "low"].includes(action.priority) ? action.priority : "medium",
+      priority,
       estimatedImpact: String(action.estimatedImpact || "未评估"),
     }
   }
@@ -249,10 +273,10 @@ export class AiAnalysisService {
     return "low"
   }
 
-  private groupBy(items: any[], key: string): Record<string, number> {
+  private groupBy(items: GroupableItem[], key: string): Record<string, number> {
     return items.reduce(
-      (acc, item) => {
-        const value = item[key] || "unknown"
+      (acc: Record<string, number>, item) => {
+        const value = (item[key] as string) || "unknown"
         acc[value] = (acc[value] || 0) + 1
         return acc
       },
@@ -260,7 +284,7 @@ export class AiAnalysisService {
     )
   }
 
-  private getTopCustomers(exceptions: any[], limit: number): string[] {
+  private getTopCustomers(exceptions: ExceptionItem[], limit: number): string[] {
     const customerCounts: Record<string, number> = {}
 
     exceptions.forEach((ex) => {

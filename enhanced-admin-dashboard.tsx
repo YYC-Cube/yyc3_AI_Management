@@ -129,7 +129,7 @@ import { UserAnalysis } from "./components/data-analysis/user-analysis"
 import { BusinessAnalysis } from "./components/data-analysis/business-analysis"
 import { ReportCenter } from "./components/data-analysis/report-center"
 import { RealTimeMonitoring } from "./components/data-analysis/real-time-monitoring"
-import { DataAlert } from "./components/data-analysis/data-alert"
+import DataAlert from "./components/data-analysis/data-alert"
 
 // 导入智能引擎组件
 import { AIDashboard } from "./components/ai-engine/ai-dashboard"

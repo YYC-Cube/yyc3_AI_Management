@@ -5,7 +5,7 @@ import type { ReactNode } from "react"
 
 interface DesignCardProps {
   children: ReactNode
-  variant?: "default" | "elevated" | "glass" | "gradient"
+  variant?: "default" | "elevated" | "glass" | "gradient" | "traditional" | "modern"
   size?: "sm" | "md" | "lg"
   interactive?: boolean
   className?: string
@@ -16,6 +16,8 @@ const variantClasses = {
   elevated: "bg-card border shadow-lg hover:shadow-xl transition-shadow duration-300",
   glass: "bg-card/80 backdrop-blur-sm border border-white/20 shadow-lg",
   gradient: "bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-950/50 dark:to-cyan-950/50 border shadow-lg",
+  traditional: "bg-white border-2 border-traditional-ink/10 shadow-lg hover:shadow-xl transition-all duration-300",
+  modern: "bg-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300 rounded-2xl",
 }
 
 const sizeClasses = {

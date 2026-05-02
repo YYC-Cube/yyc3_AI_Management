@@ -1,8 +1,18 @@
 import { pool } from "../config/database";
 import { logger } from "../config/logger";
 
+interface QueryPlanNode {
+  "Node Type"?: string;
+  Plans?: QueryPlanNode[];
+  [key: string]: unknown;
+}
+
+interface PerformanceStats {
+  [key: string]: Array<Record<string, unknown>>;
+}
+
 export class DbMonitorService {
-  static async checkQueryPlan(query: string, params: any[] = []): Promise<any> {
+  static async checkQueryPlan(query: string, params: unknown[] = []): Promise<QueryPlanNode> {
     try {
       const explainQuery = `EXPLAIN (FORMAT JSON) ${query}`;
       const result = await pool.query(explainQuery, params);
@@ -29,7 +39,7 @@ export class DbMonitorService {
     }
   }
 
-  private static analyzeQueryPlan(plan: any): string[] {
+  private static analyzeQueryPlan(plan: QueryPlanNode): string[] {
     const issues: string[] = [];
 
     // 检查是否执行了顺序扫描而不是索引扫描
@@ -53,7 +63,7 @@ export class DbMonitorService {
     return issues;
   }
 
-  private static findInPlan(plan: any, nodeName: string): boolean {
+  private static findInPlan(plan: QueryPlanNode, nodeName: string): boolean {
     if (!plan) return false;
 
     if (plan["Node Type"] === nodeName) {
@@ -72,7 +82,7 @@ export class DbMonitorService {
   }
 
   // 获取数据库性能统计
-  static async getPerformanceStats(): Promise<any> {
+  static async getPerformanceStats(): Promise<PerformanceStats> {
     try {
       const queries = [
         // 慢查询统计
@@ -110,7 +120,7 @@ export class DbMonitorService {
         },
       ];
 
-      const results: any = {};
+      const results: PerformanceStats = {};
 
       for (const q of queries) {
         try {

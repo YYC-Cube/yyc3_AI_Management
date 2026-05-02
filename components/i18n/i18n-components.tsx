@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { type JSX } from "react";
 import { useTranslation } from "react-i18next";
 import { useLanguage } from "../../hooks/use-language";
 import {
@@ -98,7 +98,7 @@ export function I18nText({
       className={`${className} ${isRTL ? "text-right" : "text-left"}`}
       dir={isRTL ? "rtl" : "ltr"}
     >
-      {t(tKey, fallback || tKey, values)}
+      {String(t(tKey, fallback || tKey, values))}
     </Tag>
   );
 }
@@ -156,7 +156,7 @@ export function I18nButton({
   return (
     <button className={buttonClasses} dir={isRTL ? "rtl" : "ltr"} {...props}>
       {children}
-      {tKey && <span>{t(tKey, fallback || tKey, values)}</span>}
+      {tKey && <span>{String(t(tKey, fallback || tKey, values))}</span>}
     </button>
   );
 }
@@ -189,7 +189,7 @@ export function I18nLabel({
       dir={isRTL ? "rtl" : "ltr"}
       {...props}
     >
-      {t(tKey, fallback || tKey, values)}
+      {String(t(tKey, fallback || tKey, values))}
       {required && <span className="text-red-500 ml-1">*</span>}
       {children}
     </label>
@@ -213,11 +213,13 @@ export function I18nInput({
   const { t } = useTranslation();
   const { isRTL } = useLanguage();
 
-  const placeholder = placeholderKey
-    ? t(
-        placeholderKey,
-        placeholderFallback || placeholderKey,
-        placeholderValues
+  const placeholder: string | undefined = placeholderKey
+    ? String(
+        t(
+          placeholderKey,
+          placeholderFallback || placeholderKey,
+          placeholderValues
+        )
       )
     : props.placeholder;
 

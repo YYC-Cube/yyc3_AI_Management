@@ -4,6 +4,7 @@ import { CsvImportService } from "../services/csv-import.service"
 import { authenticate as authMiddleware, authorize as checkPermission } from "../middleware/auth.middleware"
 import { rateLimiter } from "../middleware/rate-limiter.middleware"
 import { logger } from "../config/logger"
+import type { AuthenticatedRequest } from "../types/api.types"
 
 const router = Router()
 const csvImportService = new CsvImportService()
@@ -44,7 +45,7 @@ router.post(
         })
       }
 
-      const userId = (req as any).user.id
+      const userId = (req as AuthenticatedRequest).user?.userId || ''
       const result = await csvImportService.importCsv(req.file.buffer, req.file.originalname, userId)
 
       logger.info("CSV import completed", {

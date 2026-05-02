@@ -284,7 +284,7 @@ export function WorkflowManagement({
       },
     };
 
-    const config = configs[type][status] || {
+    const config = (configs as any)[type]?.[status] || {
       label: status,
       variant: "outline" as const,
     };

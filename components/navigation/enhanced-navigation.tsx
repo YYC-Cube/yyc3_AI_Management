@@ -462,3 +462,11 @@ export function NavigationStatusIndicator() {
     </div>
   )
 }
+
+export function useNavigation() {
+  return { activeMenu: "", setActiveMenu: (_menu: string) => {}, openMenus: [] as string[] }
+}
+
+export function MenuHighlight({ children, menuTitle, isActive, isParentActive }: { children: React.ReactNode; menuTitle?: string; isActive?: boolean; isParentActive?: boolean }) {
+  return <>{children}</>
+}

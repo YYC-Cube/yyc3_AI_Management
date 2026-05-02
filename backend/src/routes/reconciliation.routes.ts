@@ -1,202 +1,180 @@
-(function() {
-  const express = require('express');
-  const ReconciliationService = require('../services/reconciliation.service');
-  const { authenticate: authMiddleware, authorize: checkPermission } = require('../middleware/auth.middleware');
-  const { rateLimiter } = require('../middleware/rate-limiter.middleware');
-  const { httpRequestsTotal, httpRequestDuration } = require('../config/metrics');
-  const { logger } = require('../config/logger');
-  const Joi = require('joi');
+import { Router, Request, Response, NextFunction } from 'express';
+import { ReconciliationService } from '../services/reconciliation.service';
+import { authenticate as authMiddleware, authorize as checkPermission } from '../middleware/auth.middleware';
+import { rateLimiter } from '../middleware/rate-limiter.middleware';
+import { httpRequestsTotal, httpRequestDuration } from '../config/metrics';
+import { logger } from '../config/logger';
+import Joi from 'joi';
 
-  const router = express.Router();
-  const reconciliationService = new ReconciliationService();
+const router = Router();
+const reconciliationService = new ReconciliationService();
 
-  // 临时的validateRequest中间件实现
-  const validateRequest = (schema: any) => {
-    return (req: any, res: any, next: any) => {
-      try {
-        const validated = schema.validate(req.body || {}, { abortEarly: false });
-        if (validated.error) {
-          const errors = validated.error.details.map((detail: any) => detail.message);
-          return res.status(400).json({ errors });
-        }
-        req.body = validated.value;
-        next();
-      } catch (error) {
-        next(error);
+interface ReconciliationQueryParams {
+  page?: number;
+  limit?: number;
+  startDate?: string;
+  endDate?: string;
+  status?: string;
+  type?: string;
+}
+
+const validateRequest = (schema: Joi.Schema) => {
+  return (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const validated = schema.validate(req.body || {}, { abortEarly: false });
+      if (validated.error) {
+        const errors = validated.error.details.map((detail) => detail.message);
+        return res.status(400).json({ errors });
       }
-    };
+      req.body = validated.value;
+      next();
+    } catch (error) {
+      next(error);
+    }
   };
+};
 
-  /**
-   * @route   GET /reconciliation/records
-   * @desc    获取对账记录
-   * @access  Private
-   */
-  router.get('/records', 
-    authMiddleware,
-    checkPermission('reconciliation:read'),
-    rateLimiter,
-    async (req: any, res: any, next: any) => {
-      const end = httpRequestDuration.startTimer();
-      try {
-        const { page = 1, limit = 10, startDate, endDate, status, type } = req.query;
-        
-        const records = await reconciliationService.getRecords({
-          page: parseInt(page, 10),
-          limit: parseInt(limit, 10),
-          startDate,
-          endDate,
-          status,
-          type
-        });
-        
-        httpRequestsTotal.inc({ route: '/reconciliation/records', method: 'GET', status: 200 });
-        end({ route: '/reconciliation/records', method: 'GET', status: 200 });
-        
-        res.json(records);
-      } catch (error) {
-        logger.error('Failed to get reconciliation records', { error });
-        httpRequestsTotal.inc({ route: '/reconciliation/records', method: 'GET', status: 500 });
-        end({ route: '/reconciliation/records', method: 'GET', status: 500 });
-        next(error);
-      }
+router.get('/records', 
+  authMiddleware,
+  checkPermission(['reconciliation:read']),
+  rateLimiter,
+  async (req: Request, res: Response, next: NextFunction) => {
+    const end = httpRequestDuration.startTimer();
+    try {
+      const { page = '1', limit = '10', startDate, endDate, status, type } = req.query;
+      
+      const params: ReconciliationQueryParams = {
+        page: parseInt(page as string, 10),
+        limit: parseInt(limit as string, 10),
+        startDate: startDate as string | undefined,
+        endDate: endDate as string | undefined,
+        status: status as string | undefined,
+        type: type as string | undefined
+      };
+      
+      const records = await reconciliationService.getRecords(params);
+      
+      httpRequestsTotal.inc({ method: 'GET', route: '/reconciliation/records', status_code: 200 });
+      end({ method: 'GET', route: '/reconciliation/records', status_code: 200 });
+      
+      res.json(records);
+    } catch (error) {
+      logger.error('Failed to get reconciliation records', { error });
+      httpRequestsTotal.inc({ method: 'GET', route: '/reconciliation/records', status_code: 500 });
+      end({ method: 'GET', route: '/reconciliation/records', status_code: 500 });
+      next(error);
     }
-  );
+  }
+);
 
-  /**
-   * @route   POST /reconciliation/auto-reconcile
-   * @desc    自动对账
-   * @access  Private
-   */
-  router.post('/auto-reconcile',
-    authMiddleware,
-    checkPermission('reconciliation:write'),
-    rateLimiter,
-    validateRequest(Joi.object({
-      date: Joi.date().required(),
-      type: Joi.string().valid('daily', 'weekly', 'monthly').required()
-    })),
-    async (req: any, res: any, next: any) => {
-      const end = httpRequestDuration.startTimer();
-      try {
-        const { date, type } = req.body;
-        
-        const result = await reconciliationService.autoReconcile(date, type);
-        
-        httpRequestsTotal.inc({ route: '/reconciliation/auto-reconcile', method: 'POST', status: 200 });
-        end({ route: '/reconciliation/auto-reconcile', method: 'POST', status: 200 });
-        
-        res.status(200).json(result);
-      } catch (error) {
-        logger.error('Auto reconciliation failed', { error });
-        httpRequestsTotal.inc({ route: '/reconciliation/auto-reconcile', method: 'POST', status: 500 });
-        end({ route: '/reconciliation/auto-reconcile', method: 'POST', status: 500 });
-        next(error);
-      }
+router.post('/auto-reconcile',
+  authMiddleware,
+  checkPermission(['reconciliation:write']),
+  rateLimiter,
+  validateRequest(Joi.object({
+    date: Joi.date().required(),
+    type: Joi.string().valid('daily', 'weekly', 'monthly').required()
+  })),
+  async (req: Request, res: Response, _next: NextFunction) => {
+    const end = httpRequestDuration.startTimer();
+    try {
+      const userId = (req.user as { userId: string })?.userId || 'system';
+      
+      const result = await reconciliationService.autoReconcile(userId);
+      
+      httpRequestsTotal.inc({ method: 'POST', route: '/reconciliation/auto-reconcile', status_code: 200 });
+      end({ method: 'POST', route: '/reconciliation/auto-reconcile', status_code: 200 });
+      
+      res.status(200).json(result);
+    } catch (error) {
+      logger.error('Auto reconciliation failed', { error });
+      httpRequestsTotal.inc({ method: 'POST', route: '/reconciliation/auto-reconcile', status_code: 500 });
+      end({ method: 'POST', route: '/reconciliation/auto-reconcile', status_code: 500 });
+      _next(error);
     }
-  );
+  }
+);
 
-  /**
-   * @route   GET /reconciliation/stats
-   * @desc    获取对账统计数据
-   * @access  Private
-   */
-  router.get('/stats',
-    authMiddleware,
-    checkPermission('reconciliation:read'),
-    rateLimiter,
-    async (req: any, res: any, next: any) => {
-      const end = httpRequestDuration.startTimer();
-      try {
-        const { startDate, endDate, type } = req.query;
-        
-        const stats = await reconciliationService.getStats({
-          startDate,
-          endDate,
-          type
-        });
-        
-        httpRequestsTotal.inc({ route: '/reconciliation/stats', method: 'GET', status: 200 });
-        end({ route: '/reconciliation/stats', method: 'GET', status: 200 });
-        
-        res.json(stats);
-      } catch (error) {
-        logger.error('Failed to get reconciliation stats', { error });
-        httpRequestsTotal.inc({ route: '/reconciliation/stats', method: 'GET', status: 500 });
-        end({ route: '/reconciliation/stats', method: 'GET', status: 500 });
-        next(error);
-      }
+router.get('/stats',
+  authMiddleware,
+  checkPermission(['reconciliation:read']),
+  rateLimiter,
+  async (_req: Request, res: Response, next: NextFunction) => {
+    const end = httpRequestDuration.startTimer();
+    try {
+      const stats = await reconciliationService.getStats();
+      
+      httpRequestsTotal.inc({ method: 'GET', route: '/reconciliation/stats', status_code: 200 });
+      end({ method: 'GET', route: '/reconciliation/stats', status_code: 200 });
+      
+      res.json(stats);
+    } catch (error) {
+      logger.error('Failed to get reconciliation stats', { error });
+      httpRequestsTotal.inc({ method: 'GET', route: '/reconciliation/stats', status_code: 500 });
+      end({ method: 'GET', route: '/reconciliation/stats', status_code: 500 });
+      next(error);
     }
-  );
+  }
+);
 
-  /**
-   * @route   GET /reconciliation/exceptions
-   * @desc    获取对账异常
-   * @access  Private
-   */
-  router.get('/exceptions',
-    authMiddleware,
-    checkPermission('reconciliation:read'),
-    rateLimiter,
-    async (req: any, res: any, next: any) => {
-      const end = httpRequestDuration.startTimer();
-      try {
-        const { page = 1, limit = 10, startDate, endDate, status } = req.query;
-        
-        const exceptions = await reconciliationService.getExceptions({
-          page: parseInt(page, 10),
-          limit: parseInt(limit, 10),
-          startDate,
-          endDate,
-          status
-        });
-        
-        httpRequestsTotal.inc({ route: '/reconciliation/exceptions', method: 'GET', status: 200 });
-        end({ route: '/reconciliation/exceptions', method: 'GET', status: 200 });
-        
-        res.json(exceptions);
-      } catch (error) {
-        logger.error('Failed to get reconciliation exceptions', { error });
-        httpRequestsTotal.inc({ route: '/reconciliation/exceptions', method: 'GET', status: 500 });
-        end({ route: '/reconciliation/exceptions', method: 'GET', status: 500 });
-        next(error);
-      }
+router.get('/exceptions',
+  authMiddleware,
+  checkPermission(['reconciliation:read']),
+  rateLimiter,
+  async (req: Request, res: Response, next: NextFunction) => {
+    const end = httpRequestDuration.startTimer();
+    try {
+      const { page = '1', limit = '10', startDate, endDate, status } = req.query;
+      
+      const exceptions = await reconciliationService.getExceptions({
+        offset: (parseInt(page as string, 10) - 1) * parseInt(limit as string, 10),
+        limit: parseInt(limit as string, 10),
+        startDate: startDate as string | undefined,
+        endDate: endDate as string | undefined,
+        status: status as string | undefined
+      });
+      
+      httpRequestsTotal.inc({ method: 'GET', route: '/reconciliation/exceptions', status_code: 200 });
+      end({ method: 'GET', route: '/reconciliation/exceptions', status_code: 200 });
+      
+      res.json(exceptions);
+    } catch (error) {
+      logger.error('Failed to get reconciliation exceptions', { error });
+      httpRequestsTotal.inc({ method: 'GET', route: '/reconciliation/exceptions', status_code: 500 });
+      end({ method: 'GET', route: '/reconciliation/exceptions', status_code: 500 });
+      next(error);
     }
-  );
+  }
+);
 
-  /**
-   * @route   PATCH /reconciliation/exceptions/:id/resolve
-   * @desc    解决对账异常
-   * @access  Private
-   */
-  router.patch('/exceptions/:id/resolve',
-    authMiddleware,
-    checkPermission('reconciliation:write'),
-    rateLimiter,
-    validateRequest(Joi.object({
-      resolution: Joi.string().required(),
-      notes: Joi.string().optional()
-    })),
-    async (req: any, res: any, next: any) => {
-      const end = httpRequestDuration.startTimer();
-      try {
-        const { id } = req.params;
-        const { resolution, notes } = req.body || {};
-        
-        const result = await reconciliationService.resolveException(id, resolution, notes);
-        
-        httpRequestsTotal.inc({ route: '/reconciliation/exceptions/:id/resolve', method: 'PATCH', status: 200 });
-        end({ route: '/reconciliation/exceptions/:id/resolve', method: 'PATCH', status: 200 });
-        
-        res.json(result);
-      } catch (error) {
-        logger.error('Failed to resolve reconciliation exception', { error });
-        httpRequestsTotal.inc({ route: '/reconciliation/exceptions/:id/resolve', method: 'PATCH', status: 500 });
-        end({ route: '/reconciliation/exceptions/:id/resolve', method: 'PATCH', status: 500 });
-        next(error);
-      }
+router.patch('/exceptions/:id/resolve',
+  authMiddleware,
+  checkPermission(['reconciliation:write']),
+  rateLimiter,
+  validateRequest(Joi.object({
+    resolution: Joi.string().required(),
+    notes: Joi.string().optional()
+  })),
+  async (req: Request, res: Response, next: NextFunction) => {
+    const end = httpRequestDuration.startTimer();
+    try {
+      const { id } = req.params;
+      const { resolution, notes } = req.body || {};
+      const userId = (req.user as { userId: string })?.userId || 'system';
+      
+      const result = await reconciliationService.resolveException(id, resolution, userId);
+      
+      httpRequestsTotal.inc({ method: 'PATCH', route: '/reconciliation/exceptions/:id/resolve', status_code: 200 });
+      end({ method: 'PATCH', route: '/reconciliation/exceptions/:id/resolve', status_code: 200 });
+      
+      res.json(result);
+    } catch (error) {
+      logger.error('Failed to resolve reconciliation exception', { error });
+      httpRequestsTotal.inc({ method: 'PATCH', route: '/reconciliation/exceptions/:id/resolve', status_code: 500 });
+      end({ method: 'PATCH', route: '/reconciliation/exceptions/:id/resolve', status_code: 500 });
+      next(error);
     }
-  );
+  }
+);
 
-  module.exports = router;
-})();
+export default router;

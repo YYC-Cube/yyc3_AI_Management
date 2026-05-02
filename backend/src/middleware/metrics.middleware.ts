@@ -9,7 +9,7 @@ export const metricsCollector = (req: Request, res: Response, next: NextFunction
   const originalSend = res.send;
   
   // 替换res.send方法，以便在响应完成后记录指标
-  (res.send as any) = function(this: Response, ...args: [body?: any]) {
+  (res.send as (body?: unknown) => Response) = function(this: Response, ...args: [body?: unknown]) {
     const duration = (Date.now() - startTime) / 1000; // 转换为秒
     const route = getRouteFromRequest(req);
     
@@ -77,7 +77,7 @@ export const withDatabaseMetrics = async <T>(
  */
 interface CacheOperationResult {
   hit: boolean;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export const withCacheMetrics = async <T extends CacheOperationResult>(

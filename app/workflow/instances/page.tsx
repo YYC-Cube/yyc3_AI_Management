@@ -82,9 +82,9 @@ export default function WorkflowInstancesPage() {
     return STATUS_MAP[status] || status;
   };
 
-  const filteredInstances = instances.filter((instance) => {
+  const filteredInstances = instances.filter((instance: any) => {
     const matchesSearch =
-      instance.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (instance.name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
       instance.id.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus =
       statusFilter === "all" || instance.status === statusFilter;
@@ -169,10 +169,10 @@ export default function WorkflowInstancesPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredInstances.map((instance) => (
+              {filteredInstances.map((instance: any) => (
                 <TableRow key={instance.id}>
-                  <TableCell className="font-medium">{instance.name}</TableCell>
-                  <TableCell>{instance.workflowDefinitionId}</TableCell>
+                  <TableCell className="font-medium">{instance.name || instance.id}</TableCell>
+                  <TableCell>{instance.workflowDefinitionId || instance.workflowId}</TableCell>
                   <TableCell>
                     <Badge variant={getStatusBadgeVariant(instance.status)}>
                       {getStatusText(instance.status)}

@@ -5,6 +5,7 @@ import { cacheMiddleware, invalidateCacheMiddleware } from "../middleware/cache.
 import { validateRequest } from "../middleware/validation.middleware"
 import { authenticate as authMiddleware, authorize as checkPermission } from "../middleware/auth.middleware"
 import Joi from "joi"
+import type { AuthenticatedRequest } from "../types/api.types"
 
 const router = Router()
 
@@ -48,7 +49,7 @@ router.get(
   }),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const filters = req.query as any
+      const filters = req.query as Record<string, unknown>
       const result = await cachedReconciliationService.getRecords(filters)
 
       res.json({
@@ -169,7 +170,7 @@ router.put(
   }),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const userId = (req as any).user?.userId
+      const userId = (req as AuthenticatedRequest).user?.userId || ''
       const record = await cachedReconciliationService.updateRecord(req.params.id, req.body, userId)
 
       if (!record) {
@@ -229,7 +230,7 @@ router.post(
   }),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const userId = (req as any).user.id
+      const userId = (req as AuthenticatedRequest).user?.userId || ''
       const record = await cachedReconciliationService.resolveException(req.params.id, req.body.resolution, userId)
 
       if (!record) {

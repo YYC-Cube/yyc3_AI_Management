@@ -452,10 +452,10 @@ export function ContractApproval() {
 
   // 处理审批操作
   const handleApproval = (contractId: string, stepId: string, action: "approve" | "reject", comments?: string) => {
-    setContracts((prev) =>
-      prev.map((contract) => {
+    setContracts((prev): any =>
+      prev.map((contract: any) => {
         if (contract.id === contractId) {
-          const updatedHistory = contract.approvalHistory.map((step) =>
+          const updatedHistory = contract.approvalHistory.map((step: any) =>
             step.id === stepId
               ? {
                   ...step,

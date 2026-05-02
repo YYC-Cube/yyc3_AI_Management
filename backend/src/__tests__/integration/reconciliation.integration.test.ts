@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import request from "supertest"
 import { app } from "../../server"
 import { pool } from "../../config/database"

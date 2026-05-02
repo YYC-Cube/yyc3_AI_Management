@@ -7,6 +7,7 @@ import { rateLimiter } from '../middleware/rate-limiter.middleware';
 import { circuitBreaker } from '../middleware/circuit-breaker.middleware';
 import { logger } from '../config/logger';
 import Joi from 'joi';
+import type { AuthenticatedRequest } from '../types/api.types';
 
 const router = express.Router();
 const ticketService = new TicketService();
@@ -116,7 +117,7 @@ router.post(
   validateRequest(createTicketSchema, "body"),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const userId = (req as any).user.id
+      const userId = (req as AuthenticatedRequest).user?.userId
       const ticketData = {
         ...req.body,
         createdBy: userId,
@@ -150,7 +151,7 @@ router.patch(
   validateRequest(updateTicketSchema, "body"),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const userId = (req as any).user.id
+      const userId = (req as AuthenticatedRequest).user?.userId || ''
       const ticket = await ticketService.updateTicket(req.params.id, req.body, userId)
 
       if (!ticket) {
@@ -182,8 +183,8 @@ router.post(
   validateRequest(addMessageSchema, "body"),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const userId = (req as any).user.id
-      const userName = (req as any).user.name
+      const userId = (req as AuthenticatedRequest).user?.userId || ''
+      const userName = (req as AuthenticatedRequest).user?.email || ''
 
       const message = await ticketService.addTicketMessage(req.params.id, {
         sender: userId,

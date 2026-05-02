@@ -14,7 +14,7 @@ export enum RedisChannel {
 // 发布订阅消息接口
 export interface PubSubMessage {
   event: string
-  data: any
+  data: unknown
   timestamp: number
   userId?: string
 }
@@ -22,8 +22,8 @@ export interface PubSubMessage {
 // Redis发布订阅服务类
 class RedisPubSubService extends EventEmitter {
   private subscriptions: Set<string> = new Set()
-  private redisClient: any = redis
-  private subscribers: Map<string, any> = new Map()
+  private redisClient: Redis = redis
+  private subscribers: Map<string, Redis> = new Map()
 
   constructor() {
     super()
@@ -54,8 +54,9 @@ class RedisPubSubService extends EventEmitter {
       await this.redisClient.publish(channel, JSON.stringify(messageToSend))
       logger.debug(`Published message to channel: ${channel}`, { event: message.event })
       return true
-    } catch (error: any) {
-      logger.error(`Failed to publish message to channel: ${channel}`, { error })
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      logger.error(`Failed to publish message to channel: ${channel}`, { error: errorMessage })
       return false
     }
   }
@@ -133,7 +134,7 @@ class RedisPubSubService extends EventEmitter {
   }
 
   // 发布AI分析结果
-  async publishAiAnalysis(result: any): Promise<boolean> {
+  async publishAiAnalysis(result: Record<string, unknown>): Promise<boolean> {
     return this.publish(RedisChannel.AI_ANALYSIS, {
       event: 'ai_analysis_result',
       data: result
@@ -141,7 +142,7 @@ class RedisPubSubService extends EventEmitter {
   }
 
   // 发布对账结果
-  async publishReconciliationResult(result: any): Promise<boolean> {
+  async publishReconciliationResult(result: Record<string, unknown>): Promise<boolean> {
     return this.publish(RedisChannel.RECONCILIATION, {
       event: 'reconciliation_result',
       data: result
@@ -149,7 +150,7 @@ class RedisPubSubService extends EventEmitter {
   }
 
   // 发布通知
-  async publishNotification(notification: any, userId?: string): Promise<boolean> {
+  async publishNotification(notification: Record<string, unknown>, userId?: string): Promise<boolean> {
     return this.publish(RedisChannel.NOTIFICATION, {
       event: 'notification',
       data: notification,
@@ -158,7 +159,7 @@ class RedisPubSubService extends EventEmitter {
   }
 
   // 发布WebSocket广播消息
-  async publishWebSocketBroadcast(message: any, userId?: string): Promise<boolean> {
+  async publishWebSocketBroadcast(message: Record<string, unknown>, userId?: string): Promise<boolean> {
     return this.publish(RedisChannel.WEBSOCKET_BROADCAST, {
       event: 'websocket_broadcast',
       data: message,

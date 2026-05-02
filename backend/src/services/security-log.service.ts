@@ -3,6 +3,17 @@ import { logger } from '../config/logger';
 import { AppError } from '../utils/app-error';
 import { ErrorCode } from '../constants/error-codes';
 
+interface SecurityAlert {
+  id: string;
+  severity: string;
+  event_type: string;
+  description: string;
+  is_resolved: boolean;
+  created_at: Date;
+  user_id?: string;
+  details?: unknown;
+}
+
 // 安全事件类型定义
 const SecurityEventType = {
   USER_LOGIN: 'USER_LOGIN',
@@ -280,7 +291,7 @@ class SecurityLogService {
   /**
    * 获取未解决的安全警报
    */
-  async getUnresolvedAlerts(severity: string, limit: number = 100) {
+  async getUnresolvedAlerts(severity: string, limit: number = 100): Promise<SecurityAlert[]> {
     try {
       logger.info('Fetching unresolved security alerts', { severity, limit });
 
@@ -302,10 +313,10 @@ class SecurityLogService {
       const result = await pool.query(query, params);
 
       // 解析details为对象
-      const alerts = result.rows.map((row: any) => ({
+      const alerts: SecurityAlert[] = result.rows.map((row: { [key: string]: unknown }) => ({
         ...row,
-        details: JSON.parse(row.details)
-      }));
+        details: JSON.parse(row.details as string)
+      } as SecurityAlert));
 
       logger.info('Unresolved security alerts fetched successfully', { count: alerts.length });
       return alerts;

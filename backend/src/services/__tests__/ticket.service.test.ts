@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { TicketService } from "../ticket.service"
 import { pool } from "../../config/database"
 import jest from "jest"

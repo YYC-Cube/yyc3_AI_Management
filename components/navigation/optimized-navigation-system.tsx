@@ -349,7 +349,7 @@ export function OptimizedNavigationMenu({ menuItems }: OptimizedNavigationMenuPr
   const { activeMenu, openMenus, toggleMenu, navigateToMenu } = useOptimizedNavigation()
 
   // 检查子菜单是否有激活项
-  const hasActiveChild = (children: MenuItem[] = []) => {
+  const hasActiveChild = (children: MenuItem[] = []): boolean => {
     return children.some(child => child.title === activeMenu || (child.children && hasActiveChild(child.children)));
   };
 

@@ -338,9 +338,9 @@ export function DataVisualizationChart({
               ) : (
                 <Area
                   type="monotone"
-                  dataKey={config.yAxis}
-                  fill={colorScheme[0]}
-                  stroke={colorScheme[0]}
+                  dataKey={config.yAxis ?? "value"}
+                  fill={colorScheme[0] as string}
+                  stroke={colorScheme[0] as string}
                   fillOpacity={0.6}
                   animationDuration={config.animationDuration || 1500}
                 />
@@ -354,22 +354,24 @@ export function DataVisualizationChart({
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
-                activeIndex={activeIndex}
-                activeShape={renderActiveShape}
-                data={data}
-                cx="50%"
-                cy="50%"
-                innerRadius={60}
-                outerRadius={80}
-                dataKey={config.value}
-                nameKey={config.category}
-                onMouseEnter={onPieEnter}
-                animationDuration={config.animationDuration || 1500}
+                {...{
+                  activeIndex,
+                  activeShape: renderActiveShape,
+                  data,
+                  cx: "50%",
+                  cy: "50%",
+                  innerRadius: 60,
+                  outerRadius: 80,
+                  dataKey: config.value ?? "value",
+                  nameKey: config.category ?? "name",
+                  onMouseEnter: onPieEnter,
+                  animationDuration: config.animationDuration || 1500,
+                } as any}
               >
-                {data.map((entry, index) => (
+                {data.map((entry: any, index: number) => (
                   <Cell
                     key={`cell-${index}`}
-                    fill={colorScheme[index % colorScheme.length]}
+                    fill={colorScheme[index % colorScheme.length] as string}
                   />
                 ))}
               </Pie>

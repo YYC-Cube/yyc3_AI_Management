@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { toast } from "sonner";
 
-interface NetworkConnection extends NavigatorConnection {
+interface NetworkConnection extends EventTarget {
   effectiveType: "2g" | "3g" | "4g" | "slow-2g";
   downlink: number;
   rtt: number;
@@ -144,12 +144,20 @@ export function NetworkStatusProvider({
 
     try {
       const startTime = performance.now();
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 2000);
+
       const response = await fetch("/api/ping", {
         method: "HEAD",
         cache: "no-cache",
+        signal: controller.signal,
       });
-      const endTime = performance.now();
 
+      clearTimeout(timeoutId);
+
+      if (!response.ok) return;
+
+      const endTime = performance.now();
       const latency = endTime - startTime;
       setRtt(latency);
 
@@ -163,7 +171,8 @@ export function NetworkStatusProvider({
         }
       }
     } catch (error) {
-      console.warn("Network performance test failed:", error);
+      // API 未启动或网络问题 - 静默处理，不显示错误
+      // 仅用于性能检测，不影响核心功能
     }
   };
 

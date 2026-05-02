@@ -238,7 +238,7 @@ export interface TicketNotificationEvent {
   ticketNumber: string;
   message: string;
   recipients: string[];
-  data?: Record<string, any>;
+  data?: Record<string, unknown>;
 }
 
 // AI分析相关类型

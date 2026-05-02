@@ -114,22 +114,23 @@ export class OpenAIService {
         tokensUsed,
         model: response.model,
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const err = error as { message?: string; code?: string; type?: string; status?: number };
       logger.error("OpenAI API call failed", {
-        error: error.message,
-        code: error.code,
-        type: error.type,
+        error: err.message,
+        code: err.code,
+        type: err.type,
       })
 
-      if (error.status === 429) {
+      if (err.status === 429) {
         throw new Error("OpenAI rate limit exceeded. Please try again later.")
       }
 
-      if (error.status === 401) {
+      if (err.status === 401) {
         throw new Error("Invalid OpenAI API key.")
       }
 
-      throw new Error(`OpenAI API error: ${error.message}`)
+      throw new Error(`OpenAI API error: ${err.message}`)
     }
   }
 
@@ -158,9 +159,10 @@ export class OpenAIService {
         modelsAvailable: response.data.length,
       })
       return true
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const err = error as { message?: string };
       logger.error("OpenAI connection validation failed", {
-        error: error.message,
+        error: err.message,
       })
       return false
     }

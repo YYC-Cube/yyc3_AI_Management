@@ -40,7 +40,7 @@ describe("CacheService", () => {
     })
 
     it("should return null on cache miss", async () => {
-      ;(redis.get as jest.Mock).mockResolvedValue(null)
+      (redis.get as jest.Mock).mockResolvedValue(null)
 
       const result = await cacheService.get("test-key")
 
@@ -49,7 +49,7 @@ describe("CacheService", () => {
     })
 
     it("should return null on error", async () => {
-      ;(redis.get as jest.Mock).mockRejectedValue(new Error("Redis error"))
+      (redis.get as jest.Mock).mockRejectedValue(new Error("Redis error"))
 
       const result = await cacheService.get("test-key")
 
@@ -57,7 +57,7 @@ describe("CacheService", () => {
     })
 
     it("should use prefix when provided", async () => {
-      ;(redis.get as jest.Mock).mockResolvedValue(null)
+      (redis.get as jest.Mock).mockResolvedValue(null)
 
       await cacheService.get("test-key", { prefix: "app" })
 
@@ -91,7 +91,7 @@ describe("CacheService", () => {
     })
 
     it("should return false on error", async () => {
-      ;(redis.setex as jest.Mock).mockRejectedValue(new Error("Redis error"))
+      (redis.setex as jest.Mock).mockRejectedValue(new Error("Redis error"))
 
       const result = await cacheService.set("test-key", { test: "data" })
 
@@ -101,7 +101,7 @@ describe("CacheService", () => {
 
   describe("delete", () => {
     it("should delete cache key", async () => {
-      ;(redis.del as jest.Mock).mockResolvedValue(1)
+      (redis.del as jest.Mock).mockResolvedValue(1)
 
       const result = await cacheService.delete("test-key")
 
@@ -110,7 +110,7 @@ describe("CacheService", () => {
     })
 
     it("should return false when key does not exist", async () => {
-      ;(redis.del as jest.Mock).mockResolvedValue(0)
+      (redis.del as jest.Mock).mockResolvedValue(0)
 
       const result = await cacheService.delete("test-key")
 
@@ -120,7 +120,7 @@ describe("CacheService", () => {
 
   describe("deletePattern", () => {
     it("should delete all keys matching pattern", async () => {
-      ;(redis.keys as jest.Mock).mockResolvedValue(["key1", "key2", "key3"])
+      (redis.keys as jest.Mock).mockResolvedValue(["key1", "key2", "key3"])
       ;(redis.del as jest.Mock).mockResolvedValue(3)
 
       const result = await cacheService.deletePattern("test:*")
@@ -131,7 +131,7 @@ describe("CacheService", () => {
     })
 
     it("should return 0 when no keys match", async () => {
-      ;(redis.keys as jest.Mock).mockResolvedValue([])
+      (redis.keys as jest.Mock).mockResolvedValue([])
 
       const result = await cacheService.deletePattern("test:*")
 
@@ -142,7 +142,7 @@ describe("CacheService", () => {
 
   describe("exists", () => {
     it("should return true when key exists", async () => {
-      ;(redis.exists as jest.Mock).mockResolvedValue(1)
+      (redis.exists as jest.Mock).mockResolvedValue(1)
 
       const result = await cacheService.exists("test-key")
 
@@ -151,7 +151,7 @@ describe("CacheService", () => {
     })
 
     it("should return false when key does not exist", async () => {
-      ;(redis.exists as jest.Mock).mockResolvedValue(0)
+      (redis.exists as jest.Mock).mockResolvedValue(0)
 
       const result = await cacheService.exists("test-key")
 
@@ -161,7 +161,7 @@ describe("CacheService", () => {
 
   describe("ttl", () => {
     it("should return remaining TTL", async () => {
-      ;(redis.ttl as jest.Mock).mockResolvedValue(300)
+      (redis.ttl as jest.Mock).mockResolvedValue(300)
 
       const result = await cacheService.ttl("test-key")
 
@@ -198,7 +198,7 @@ describe("CacheService", () => {
 
   describe("increment", () => {
     it("should increment counter", async () => {
-      ;(redis.incr as jest.Mock).mockResolvedValue(5)
+      (redis.incr as jest.Mock).mockResolvedValue(5)
 
       const result = await cacheService.increment("counter")
 
@@ -209,7 +209,7 @@ describe("CacheService", () => {
 
   describe("decrement", () => {
     it("should decrement counter", async () => {
-      ;(redis.decr as jest.Mock).mockResolvedValue(3)
+      (redis.decr as jest.Mock).mockResolvedValue(3)
 
       const result = await cacheService.decrement("counter")
 
@@ -221,7 +221,7 @@ describe("CacheService", () => {
   describe("getStats", () => {
     it("should calculate correct hit rate", async () => {
       // Simulate some cache hits and misses
-      ;(redis.get as jest.Mock)
+      (redis.get as jest.Mock)
         .mockResolvedValueOnce(JSON.stringify({ data: "test1" }))
         .mockResolvedValueOnce(null)
         .mockResolvedValueOnce(JSON.stringify({ data: "test2" }))

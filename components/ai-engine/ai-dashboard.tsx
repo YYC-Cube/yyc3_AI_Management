@@ -949,7 +949,7 @@ export function AIDashboard() {
                                 {task.type}
                               </Badge>
                               {getStatusBadge(task.status)}
-                              <Badge className={getPriorityColor(task.priority)} size="sm">
+                              <Badge className={getPriorityColor(task.priority) + " text-xs"}>
                                 {task.priority === "high"
                                   ? "高优先级"
                                   : task.priority === "medium"

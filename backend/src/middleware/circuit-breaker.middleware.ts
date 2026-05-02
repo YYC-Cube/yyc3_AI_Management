@@ -48,7 +48,7 @@ export function circuitBreaker(options: CircuitBreakerOptions) {
 
     // 记录响应
     const originalSend = res.send
-    res.send = function (data: any) {
+    res.send = function (data: unknown) {
       if (res.statusCode >= 500) {
         circuit!.failures++
         circuit!.lastFailureTime = Date.now()

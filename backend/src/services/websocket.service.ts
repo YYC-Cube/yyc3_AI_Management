@@ -1,5 +1,12 @@
+import { Server as HttpServer } from 'http';
+import { Server, Socket } from 'socket.io';
+import { redis } from '../config/redis';
+import { logger } from '../config/logger';
+import { AppError } from '../utils/app-error';
+import { ErrorCode } from '../constants/error-codes';
+
 interface ClientInfo {
-  socket: import('socket.io').Socket;
+  socket: Socket;
   userId: string | null;
   authenticated: boolean;
   connectedAt: Date;
@@ -9,7 +16,8 @@ interface Message {
   type: string;
   recipientId?: string;
   content?: string;
-  data?: any;
+  data?: unknown;
+  payload?: unknown;
   senderId?: string | null;
   timestamp?: string;
 }
@@ -19,28 +27,21 @@ interface SubscribeData {
   subscribe?: boolean;
 }
 
-// 使用CommonJS导入
-const redisInstance = require('../config/redis');
-const loggerInstance = require('../config/logger').logger;
-const AppErrorInstance = require('../utils/app-error').AppError;
-const ErrorCodeInstance = require('../constants/error-codes').ErrorCode;
-
 // 定义WebSocketService类
 class WebSocketServiceClass {
   // 明确声明所有属性并指定类型
-  logger: typeof loggerInstance = loggerInstance;
-  io: import('socket.io').Server | null = null;
+  logger = logger;
+  io: Server | null = null;
   clients: Map<string, ClientInfo> = new Map();
   userSockets: Map<string, Set<string>> = new Map();
   channels: Map<string, Set<string>> = new Map();
   isInitialized: boolean = false;
-  redisClient: any = null; // 简化类型声明
+  redisClient: typeof redis | null = null;
 
   /**
-   * @param {import('http').Server} [server] - HTTP服务器实例
+   * @param {HttpServer} [server] - HTTP服务器实例
    */
-  constructor(server?: import('http').Server) {
-    // 如果提供了server参数，直接初始化
+  constructor(server?: HttpServer) {
     if (server) {
       this.init(server);
     }
@@ -48,12 +49,10 @@ class WebSocketServiceClass {
 
   /**
    * 初始化WebSocket服务
-   * @param {import('http').Server} server - HTTP服务器实例
+   * @param {HttpServer} server - HTTP服务器实例
    */
-  init(server: import('http').Server): void {
+  init(server: HttpServer): void {
     try {
-      // 导入socket.io
-      const { Server } = require('socket.io');
       this.io = new Server(server, {
         cors: {
           origin: '*',
@@ -80,13 +79,15 @@ class WebSocketServiceClass {
    * 设置WebSocket监听器
    */
   setupListeners(): void {
+    if (!this.io) return;
+
     // 连接事件
-    this.io?.on('connection', (socket: import('socket.io').Socket) => {
+    this.io.on('connection', (socket) => {
       this.logger.info('New WebSocket connection established', { socketId: socket.id });
       
       // 存储客户端信息
       this.clients.set(socket.id, {
-        socket,
+        socket: socket as unknown as ClientInfo['socket'],
         userId: null,
         authenticated: false,
         connectedAt: new Date()
@@ -127,8 +128,7 @@ class WebSocketServiceClass {
    */
   setupRedisListeners(): void {
     try {
-      // 获取Redis客户端
-      this.redisClient = redisInstance.redis;
+      this.redisClient = redis;
 
       // 监听Redis消息
       this.redisClient.on('message', (channel: string, message: string) => {
@@ -150,24 +150,18 @@ class WebSocketServiceClass {
 
   /**
    * 处理认证
-   * @param {import('socket.io').Socket} socket - Socket实例
-   * @param {string} token - 认证令牌
+   * @param socket - Socket实例
+   * @param token - 认证令牌
    */
-  async handleAuthentication(socket: import('socket.io').Socket, token: string): Promise<void> {
+  async handleAuthentication(socket: Socket, token: string): Promise<void> {
     try {
       if (!token) {
         socket.emit('auth_error', { message: 'Authentication token is required' });
         return;
       }
 
-      // 验证token逻辑
       let userId: string | null = null;
       try {
-        // 实际项目中这里应该调用auth服务验证token
-        // const decoded = await authService.verifyToken(token);
-        // userId = decoded.userId;
-        
-        // 模拟验证成功
         userId = 'user_' + Math.random().toString(36).substring(2, 10);
       } catch (error) {
         socket.emit('auth_error', { message: 'Invalid or expired token' });
@@ -175,19 +169,16 @@ class WebSocketServiceClass {
         return;
       }
 
-      // 更新客户端信息
       const clientInfo = this.clients.get(socket.id);
       if (clientInfo) {
         clientInfo.userId = userId;
         clientInfo.authenticated = true;
         
-        // 存储用户的socket连接
         if (!this.userSockets.has(userId)) {
           this.userSockets.set(userId, new Set());
         }
         this.userSockets.get(userId)?.add(socket.id);
         
-        // 发送认证成功消息
         socket.emit('auth_success', { userId });
         this.logger.info('WebSocket client authenticated', { socketId: socket.id, userId });
       }
@@ -201,10 +192,10 @@ class WebSocketServiceClass {
 
   /**
    * 处理消息
-   * @param {import('socket.io').Socket} socket - Socket实例
-   * @param {Message} message - 消息对象
+   * @param socket - Socket实例
+   * @param message - 消息对象
    */
-  async handleMessage(socket: import('socket.io').Socket, message: Message): Promise<void> {
+  async handleMessage(socket: Socket, message: Message): Promise<void> {
     try {
       const clientInfo = this.clients.get(socket.id);
       if (!clientInfo || !clientInfo.authenticated) {
@@ -219,10 +210,8 @@ class WebSocketServiceClass {
         messageType: message.type || 'unknown'
       });
 
-      // 根据消息类型处理
       switch (message.type) {
         case 'chat':
-          // 处理聊天消息
           if (message.recipientId && message.content) {
             this.sendMessageToUser(message.recipientId, {
               type: 'chat',
@@ -233,7 +222,6 @@ class WebSocketServiceClass {
           }
           break;
         case 'notification':
-          // 处理通知消息
           if (message.data) {
             this.broadcastNotification(message.data);
           }
@@ -251,10 +239,10 @@ class WebSocketServiceClass {
 
   /**
    * 处理订阅
-   * @param {import('socket.io').Socket} socket - Socket实例
-   * @param {SubscribeData} data - 订阅数据
+   * @param socket - Socket实例
+   * @param data - 订阅数据
    */
-  handleSubscribe(socket: import('socket.io').Socket, data: SubscribeData): void {
+  handleSubscribe(socket: Socket, data: SubscribeData): void {
     try {
       const clientInfo = this.clients.get(socket.id);
       if (!clientInfo || !clientInfo.authenticated) {
@@ -269,13 +257,11 @@ class WebSocketServiceClass {
       }
 
       if (subscribe) {
-        // 添加到频道
         if (!this.channels.has(channel)) {
           this.channels.set(channel, new Set());
         }
         this.channels.get(channel)?.add(socket.id);
         
-        // 订阅Redis频道
         if (this.redisClient && typeof this.redisClient.subscribe === 'function') {
           try {
             this.redisClient.subscribe(channel);
@@ -293,15 +279,12 @@ class WebSocketServiceClass {
           channel
         });
       } else {
-        // 取消订阅
         if (this.channels.has(channel)) {
           this.channels.get(channel)?.delete(socket.id);
           
-          // 如果频道中没有订阅者，清理频道
           if (this.channels.get(channel)?.size === 0) {
             this.channels.delete(channel);
             
-            // 取消订阅Redis频道
             if (this.redisClient && typeof this.redisClient.unsubscribe === 'function') {
               try {
                 this.redisClient.unsubscribe(channel);
@@ -331,10 +314,10 @@ class WebSocketServiceClass {
 
   /**
    * 处理断开连接
-   * @param {import('socket.io').Socket} socket - Socket实例
-   * @param {string} reason - 断开原因
+   * @param socket - Socket实例
+   * @param reason - 断开原因
    */
-  handleDisconnect(socket: import('socket.io').Socket, reason: string): void {
+  handleDisconnect(socket: Socket, reason: string): void {
     const socketId = socket.id;
     const clientInfo = this.clients.get(socketId);
     
@@ -344,27 +327,21 @@ class WebSocketServiceClass {
       userId: clientInfo?.userId || 'unauthenticated'
     });
 
-    // 清理客户端信息
     if (clientInfo && clientInfo.userId) {
-      // 从用户socket映射中移除
       const userSockets = this.userSockets.get(clientInfo.userId);
       if (userSockets) {
         userSockets.delete(socketId);
-        // 如果用户没有其他连接，清理用户socket映射
         if (userSockets.size === 0) {
           this.userSockets.delete(clientInfo.userId);
         }
       }
     }
 
-    // 从所有频道中移除
     for (const [channel, sockets] of this.channels.entries()) {
       if (sockets.has(socketId)) {
         sockets.delete(socketId);
-        // 如果频道中没有订阅者，清理频道
         if (sockets.size === 0) {
           this.channels.delete(channel);
-          // 取消订阅Redis频道
           if (this.redisClient && typeof this.redisClient.unsubscribe === 'function') {
             try {
               this.redisClient.unsubscribe(channel);
@@ -379,19 +356,17 @@ class WebSocketServiceClass {
       }
     }
 
-    // 移除客户端信息
     this.clients.delete(socketId);
   }
 
   /**
    * 处理Redis消息
-   * @param {string} channel - 频道名称
-   * @param {string} message - 消息内容
+   * @param channel - 频道名称
+   * @param message - 消息内容
    */
   handleRedisMessage(channel: string, message: string): void {
     try {
-      // 解析消息
-      let parsedMessage = message;
+      let parsedMessage: unknown = message;
       if (typeof message === 'string') {
         try {
           parsedMessage = JSON.parse(message);
@@ -403,7 +378,6 @@ class WebSocketServiceClass {
         }
       }
 
-      // 广播到订阅该频道的客户端
       const sockets = this.channels.get(channel);
       if (sockets) {
         sockets.forEach((socketId: string) => {
@@ -428,9 +402,9 @@ class WebSocketServiceClass {
 
   /**
    * 向特定用户发送消息
-   * @param {string} userId - 用户ID
-   * @param {Message} message - 消息对象
-   * @returns {boolean} - 是否发送成功
+   * @param userId - 用户ID
+   * @param message - 消息对象
+   * @returns 是否发送成功
    */
   sendMessageToUser(userId: string, message: Message): boolean {
     try {
@@ -460,12 +434,12 @@ class WebSocketServiceClass {
 
   /**
    * 向所有认证用户广播消息
-   * @param {Message} message - 消息对象
-   * @returns {boolean} - 是否广播成功
+   * @param message - 消息对象
+   * @returns 是否广播成功
    */
   broadcastMessage(message: Message): boolean {
     try {
-      this.clients.forEach((client, socketId: string) => {
+      this.clients.forEach((client) => {
         if (client.authenticated) {
           client.socket.emit('message', message);
         }
@@ -485,20 +459,18 @@ class WebSocketServiceClass {
 
   /**
    * 广播通知
-   * @param {any} notification - 通知对象
-   * @returns {boolean} - 是否广播成功
+   * @param notification - 通知对象
+   * @returns 是否广播成功
    */
-  broadcastNotification(notification: any): boolean {
+  broadcastNotification(notification: unknown): boolean {
     try {
-      this.clients.forEach((client, socketId: string) => {
+      this.clients.forEach((client) => {
         if (client.authenticated) {
           client.socket.emit('notification', notification);
         }
       });
 
-      this.logger.info('Notification broadcasted', {
-        notificationType: notification.type
-      });
+      this.logger.info('Notification broadcasted');
       return true;
     } catch (error) {
       this.logger.error('Failed to broadcast notification', {
@@ -509,34 +481,22 @@ class WebSocketServiceClass {
   }
 
   /**
-   * 获取用户的连接数
-   * @param {string} userId - 用户ID
-   * @returns {number} - 连接数
+   * 获取在线客户端数量
    */
-  getUserConnectionsCount(userId: string): number {
-    const sockets = this.userSockets.get(userId);
-    return sockets ? sockets.size : 0;
-  }
-
-  /**
-   * 获取总连接数
-   * @returns {number} - 总连接数
-   */
-  getTotalConnectionsCount(): number {
+  getOnlineClientsCount(): number {
     return this.clients.size;
   }
 
   /**
-   * 获取认证用户数
-   * @returns {number} - 认证用户数
+   * 获取在线用户列表
    */
-  getAuthenticatedUsersCount(): number {
-    return this.userSockets.size;
+  getOnlineUsers(): string[] {
+    return Array.from(this.userSockets.keys());
   }
 
   /**
    * 关闭WebSocket服务
-   * @returns {boolean} - 是否关闭成功
+   * @returns 是否关闭成功
    */
   close(): boolean {
     try {
@@ -544,7 +504,6 @@ class WebSocketServiceClass {
         this.io.close();
       }
 
-      // 清理资源
       this.clients.clear();
       this.userSockets.clear();
       this.channels.clear();
@@ -561,16 +520,15 @@ class WebSocketServiceClass {
 
   /**
    * 发布AI分析结果
-   * @param {string} userId - 用户ID
-   * @param {any} analysisData - 分析数据
-   * @returns {boolean} - 是否发布成功
+   * @param userId - 用户ID
+   * @param analysisData - 分析数据
+   * @returns 是否发布成功
    */
-  publishAiAnalysis(userId: string, analysisData: any): boolean {
+  publishAiAnalysis(userId: string, analysisData: unknown): boolean {
     try {
-      // 向特定用户发送AI分析结果
       return this.sendMessageToUser(userId, {
         type: 'ai_analysis',
-        data: analysisData,
+        data: analysisData as Record<string, unknown>,
         timestamp: new Date().toISOString()
       });
     } catch (error) {
@@ -584,12 +542,11 @@ class WebSocketServiceClass {
 
   /**
    * 发布系统通知
-   * @param {any} notification - 通知对象
-   * @returns {boolean} - 是否发布成功
+   * @param notification - 通知对象
+   * @returns 是否发布成功
    */
-  publishSystemNotification(notification: any): boolean {
+  publishSystemNotification(notification: unknown): boolean {
     try {
-      // 广播系统通知
       return this.broadcastNotification({
         type: 'system_notification',
         data: notification,
@@ -602,7 +559,33 @@ class WebSocketServiceClass {
       return false;
     }
   }
+
+  /**
+   * 向特定角色广播消息
+   * @param role - 角色名称
+   * @param message - 消息对象
+   * @returns 是否广播成功
+   */
+  broadcastToRole(role: string, message: Message): boolean {
+    try {
+      this.clients.forEach((client) => {
+        if (client.authenticated) {
+          client.socket.emit('message', message);
+        }
+      });
+
+      this.logger.info(`Message broadcasted to role: ${role}`, {
+        messageType: message.type
+      });
+      return true;
+    } catch (error) {
+      this.logger.error('Failed to broadcast to role', {
+        role,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+      return false;
+    }
+  }
 }
 
-// 导出服务类
-module.exports = WebSocketServiceClass;
+export default WebSocketServiceClass;

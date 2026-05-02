@@ -12,6 +12,10 @@ import type {
 } from "../types/reconciliation"
 import { ReconciliationService } from "./reconciliation.service"
 
+interface DbRow {
+  [key: string]: unknown;
+}
+
 export class CachedReconciliationService extends ReconciliationService {
   private readonly CACHE_PREFIX = "reconciliation"
   private readonly CACHE_TTL = {
@@ -123,7 +127,7 @@ export class CachedReconciliationService extends ReconciliationService {
     }
 
     const fields: string[] = []
-    const values: any[] = []
+    const values: unknown[] = []
     let paramIndex = 1
 
     if (updates.status) {
@@ -368,7 +372,7 @@ export class CachedReconciliationService extends ReconciliationService {
       SELECT * FROM reconciliation_records
       WHERE 1=1
     `
-    const params: any[] = []
+    const params: unknown[] = []
     let paramIndex = 1
 
     if (status) {
@@ -423,7 +427,7 @@ export class CachedReconciliationService extends ReconciliationService {
       SELECT * FROM reconciliation_exceptions
       WHERE 1=1
     `
-    const params: any[] = []
+    const params: unknown[] = []
     let paramIndex = 1
 
     if (status) {
@@ -581,52 +585,52 @@ export class CachedReconciliationService extends ReconciliationService {
     await pool.query(query, [status, recordId])
   }
 
-  protected mapDbRecordToModel(row: any): ReconciliationRecord {
+  protected mapDbRecordToModel(row: DbRow): ReconciliationRecord {
     return {
-      id: row.id,
-      recordNumber: row.record_number,
-      transactionDate: row.transaction_date,
-      transactionType: row.transaction_type,
-      amount: Number.parseFloat(row.amount),
-      currency: row.currency,
-      description: row.description,
-      status: row.status,
-      bankReference: row.bank_reference,
-      invoiceNumber: row.invoice_number,
-      customerName: row.customer_name,
-      category: row.category,
-      notes: row.notes,
-      createdBy: row.created_by,
-      createdAt: row.created_at,
-      updatedAt: row.updated_at,
-      resolvedAt: row.resolved_at,
+      id: row.id as string,
+      recordNumber: row.record_number as string,
+      transactionDate: new Date(row.transaction_date as string),
+      transactionType: row.transaction_type as ReconciliationRecord['transactionType'],
+      amount: Number.parseFloat(row.amount as string),
+      currency: row.currency as string,
+      description: row.description as string,
+      status: row.status as ReconciliationRecord['status'],
+      bankReference: row.bank_reference as string | undefined,
+      invoiceNumber: row.invoice_number as string | undefined,
+      customerName: (row.customer_name as string) || '',
+      category: (row.category as string) || '',
+      notes: row.notes as string | undefined,
+      createdBy: row.created_by as string,
+      createdAt: new Date(row.created_at as string),
+      updatedAt: new Date(row.updated_at as string),
+      resolvedAt: row.resolved_at ? new Date(row.resolved_at as string) : undefined,
     }
   }
 
-  protected mapDbRuleToModel(row: any): ReconciliationRule {
+  protected mapDbRuleToModel(row: DbRow): ReconciliationRule {
     return {
-      id: row.id,
-      ruleName: row.rule_name,
-      ruleType: row.rule_type,
-      amountTolerance: Number.parseFloat(row.amount_tolerance),
-      dateToleranceDays: row.date_tolerance_days,
-      isActive: row.is_active,
-      priority: row.priority,
+      id: row.id as string,
+      ruleName: row.rule_name as string,
+      ruleType: row.rule_type as ReconciliationRule['ruleType'],
+      amountTolerance: Number.parseFloat(row.amount_tolerance as string),
+      dateToleranceDays: Number(row.date_tolerance_days),
+      isActive: Boolean(row.is_active),
+      priority: Number(row.priority),
     }
   }
 
-  protected mapDbExceptionToModel(row: any): ReconciliationException {
+  protected mapDbExceptionToModel(row: DbRow): ReconciliationException {
     return {
-      id: row.id,
-      recordId: row.record_id,
-      exceptionType: row.exception_type,
-      severity: row.severity,
-      description: row.description,
-      resolutionStatus: row.resolution_status,
-      assignedTo: row.assigned_to,
-      resolvedAt: row.resolved_at,
-      resolutionNotes: row.resolution_notes,
-      createdAt: row.created_at,
+      id: row.id as string,
+      recordId: row.record_id as string,
+      exceptionType: row.exception_type as ReconciliationException['exceptionType'],
+      severity: row.severity as ReconciliationException['severity'],
+      description: row.description as string,
+      resolutionStatus: row.resolution_status as ReconciliationException['resolutionStatus'],
+      assignedTo: row.assigned_to as string | undefined,
+      resolvedAt: row.resolved_at ? new Date(row.resolved_at as string) : undefined,
+      resolutionNotes: row.resolution_notes as string | undefined,
+      createdAt: new Date(row.created_at as string),
     }
   }
 

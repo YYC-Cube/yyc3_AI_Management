@@ -27,7 +27,7 @@ export interface WebSocketClient {
 
 export interface WebSocketMessage {
   type: WebSocketMessageType
-  payload: any
+  payload: unknown
   timestamp: string
   userId?: string
   ticketId?: string
@@ -42,7 +42,7 @@ export interface NotificationPayload {
   priority: "low" | "medium" | "high" | "urgent"
   actionUrl?: string
   actionLabel?: string
-  data?: Record<string, any>
+  data?: Record<string, unknown>
   userId?: string
 }
 
@@ -55,7 +55,7 @@ export interface TicketUpdatePayload {
   priority: string
   assignedTo?: string
   updatedBy: string
-  changes?: Record<string, any>
+  changes?: Record<string, unknown>
   timestamp: string
 }
 
@@ -99,10 +99,10 @@ export interface UserActivityPayload {
 export interface WebSocketError {
   code: string
   message: string
-  details?: any
+  details?: unknown
 }
 
-export interface WebSocketResponse<T = any> {
+export interface WebSocketResponse<T = unknown> {
   success: boolean
   data?: T
   error?: WebSocketError

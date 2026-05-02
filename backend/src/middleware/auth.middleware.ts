@@ -1,7 +1,7 @@
 import { AppError } from '../utils/app-error';
 import { logger } from '../config/logger';
 import { ErrorCode } from '../constants/error-codes';
-import AuthService from '../services/auth.service';
+import { authService } from '../services/auth.service';
 
 // 扩展Express Request类型以包含user属性
 declare global {
@@ -44,7 +44,7 @@ const authenticate = async (req: import('express').Request, res: import('express
     }
 
     // 验证令牌并获取用户信息
-    const user = AuthService.verifyAccessToken(token);
+    const user = authService.verifyAccessToken(token);
     req.user = user;
 
     // 记录认证事件
@@ -110,7 +110,7 @@ const optionalAuth = async (req: import('express').Request, res: import('express
       const [bearer, token] = authHeader.split(' ');
       if (bearer === 'Bearer' && token) {
         try {
-          const user = AuthService.verifyAccessToken(token);
+          const user = authService.verifyAccessToken(token);
           req.user = user;
           logger.info('Optional authentication successful', { userId: user.userId });
         } catch (error) {

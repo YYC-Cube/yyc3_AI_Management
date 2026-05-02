@@ -37,7 +37,7 @@ export function cacheMiddleware(options: CacheMiddlewareOptions = {}) {
 
     try {
       // 尝试从缓存获取
-      const cached = await cacheService.get<any>(cacheKey, { prefix })
+      const cached = await cacheService.get<unknown>(cacheKey, { prefix })
 
       if (cached) {
         logger.debug("Cache middleware hit", { key: cacheKey })
@@ -51,7 +51,7 @@ export function cacheMiddleware(options: CacheMiddlewareOptions = {}) {
 
       // 拦截响应
       const originalJson = res.json.bind(res)
-      res.json = (body: any) => {
+      res.json = (body: unknown) => {
         // 只缓存成功的响应
         if (res.statusCode >= 200 && res.statusCode < 300) {
           cacheService.set(cacheKey, body, { ttl, prefix }).catch((error) => {
@@ -74,7 +74,7 @@ export function cacheMiddleware(options: CacheMiddlewareOptions = {}) {
  */
 function generateCacheKey(req: Request): string {
   const { path, query } = req
-  const queryString = new URLSearchParams(query as any).toString()
+  const queryString = new URLSearchParams(query as Record<string, string>).toString()
   return queryString ? `${path}?${queryString}` : path
 }
 
@@ -91,7 +91,7 @@ export function invalidateCacheMiddleware(options: {
   return async (req: Request, res: Response, next: NextFunction) => {
     // 拦截响应
     const originalJson = res.json.bind(res)
-    res.json = (body: any) => {
+    res.json = (body: unknown) => {
       // 只在成功响应后清除缓存
       if (res.statusCode >= 200 && res.statusCode < 300) {
         const patternsToInvalidate = typeof patterns === "function" ? patterns(req) : patterns

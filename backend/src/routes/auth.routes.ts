@@ -1,6 +1,6 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { body, validationResult } from 'express-validator';
-import AuthService from '../services/auth.service';
+import { authService } from '../services/auth.service';
 import { authenticate, authorize } from '../middleware/auth.middleware';
 import { logger } from '../config/logger';
 import { AppError } from '../utils/app-error';
@@ -42,7 +42,7 @@ router.post(
       const { email, password, firstName, lastName } = req.body;
 
       // 创建用户
-      const result = await AuthService.register(email, password, firstName, lastName);
+      const result = await authService.register(email, password, firstName, lastName);
 
       logger.info('User registered successfully', { email });
 
@@ -80,7 +80,7 @@ router.post(
       const ipAddress = req.ip || req.connection.remoteAddress || '';
 
       // 登录用户
-      const result = await AuthService.login(email, password, ipAddress);
+      const result = await authService.login(email, password, ipAddress);
 
       logger.info('User logged in successfully', { email });
 
@@ -115,7 +115,7 @@ router.post(
       const { refreshToken } = req.body;
 
       // 刷新令牌
-      const result = await AuthService.refreshToken(refreshToken);
+      const result = await authService.refreshToken(refreshToken);
 
       logger.info('Token refreshed successfully');
 
@@ -144,7 +144,7 @@ router.post('/logout', authenticate, async (req: Request, res: Response, next: N
     }
 
     // 登出用户
-    await AuthService.logout(userId, refreshToken);
+    await authService.logout(userId, refreshToken);
 
     logger.info('User logged out successfully', { userId });
 
@@ -178,7 +178,7 @@ router.post(
       const { email } = req.body;
 
       // 请求密码重置
-      await AuthService.requestPasswordReset(email);
+      await authService.requestPasswordReset(email);
 
       logger.info('Password reset request processed', { email });
 
@@ -225,7 +225,7 @@ router.post(
       const { token, password } = req.body;
 
       // 重置密码
-      await AuthService.resetPassword(token, password);
+      await authService.resetPassword(token, password);
 
       logger.info('Password reset successfully');
 
@@ -271,7 +271,7 @@ router.post(
       }
 
       // 修改密码
-      await AuthService.changePassword(userId, currentPassword, newPassword);
+      await authService.changePassword(userId, currentPassword, newPassword);
 
       logger.info('Password changed successfully', { userId });
 
@@ -335,4 +335,4 @@ router.get('/permissions', authenticate, async (req: Request, res: Response, nex
   }
 });
 
-module.exports = router;
+export default router;

@@ -1,21 +1,52 @@
-// 导入必要的模块
-const { pool } = require('../config/database');
-const { securityLogService } = require('../services/security-log.service');
-const AppError = require('../utils/app-error');
-const { logger } = require('../config/logger');
-
-// 导入Express类型
 import type { Request, Response, NextFunction } from 'express';
+import { pool } from '../config/database';
+import { securityLogService } from '../services/security-log.service';
+import { AppError } from '../utils/app-error';
+import { logger } from '../config/logger';
+import type { AuthenticatedRequest, SecurityLogEntry } from '../types/api.types';
+
+interface LoginHistoryEntry {
+  id: string;
+  user_id: string;
+  username: string;
+  ip_address: string;
+  user_agent?: string;
+  success: boolean;
+  reason?: string;
+  timestamp: Date;
+}
+
+interface ActivityLogEntry {
+  id: string;
+  user_id: string;
+  username: string;
+  event_type: string;
+  details: Record<string, unknown>;
+  ip_address: string;
+  timestamp: Date;
+}
+
+interface SecurityAlert {
+  id: string;
+  severity: string;
+  event_type: string;
+  description: string;
+  is_resolved: boolean;
+  created_at: Date;
+  user_id?: string;
+  details?: unknown;
+}
 
 // 安全日志控制器
 class SecurityLogController {
   // 查询登录历史记录
   static getLoginHistory = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { userId, username, ipAddress, success, startDate, endDate, limit = '20', offset = '0' } = req.query;
+      const { userId, username } = req.query;
+      const { limit = '20', offset = '0' } = req.query;
       
       // 获取用户登录历史
-      let loginHistory: any[] = [];
+      let loginHistory: LoginHistoryEntry[] = [];
       if (userId) {
         loginHistory = await securityLogService.getUserLoginHistory(userId as string, parseInt(limit as string));
       } else {
@@ -52,27 +83,28 @@ class SecurityLogController {
   // 查询用户活动日志
   static getUserActivityLogs = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { userId, username, eventType, ipAddress, startDate, endDate, limit = '20', offset = '0' } = req.query;
+      const { userId, username, eventType, ipAddress } = req.query;
+      const { limit = '20', offset = '0' } = req.query;
       
       // 获取用户活动日志
       let queryText = `SELECT id, user_id, username, event_type, details, ip_address, timestamp
                      FROM user_activity_logs WHERE 1=1`;
-      const params: any[] = [];
+      const params: (string | number)[] = [];
       let paramIndex = 1;
       
       if (userId) {
         queryText += ` AND user_id = $${paramIndex++}`;
-        params.push(userId);
+        params.push(userId as string);
       }
-      
+
       if (eventType) {
         queryText += ` AND event_type = $${paramIndex++}`;
-        params.push(eventType);
+        params.push(eventType as string);
       }
-      
+
       if (ipAddress) {
         queryText += ` AND ip_address = $${paramIndex++}`;
-        params.push(ipAddress);
+        params.push(ipAddress as string);
       }
       
       queryText += ` ORDER BY timestamp DESC LIMIT $${paramIndex++} OFFSET $${paramIndex++}`;
@@ -81,9 +113,9 @@ class SecurityLogController {
       const result = await pool.query(queryText, params);
       
       // 解析details为对象
-      const activityLogs = result.rows.map((row: any) => ({
+      const activityLogs = result.rows.map((row: Record<string, unknown>) => ({
         ...row,
-        details: JSON.parse(row.details)
+        details: JSON.parse(row.details as string)
       }));
 
       logger.info('Retrieved user activity logs', {
@@ -111,14 +143,15 @@ class SecurityLogController {
   // 查询安全警报
   static getSecurityAlerts = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { severity, eventType, userId, isResolved, startDate, endDate, limit = '20', offset = '0' } = req.query;
+      const { severity, eventType, isResolved } = req.query;
+      const { limit = '20', offset = '0' } = req.query;
       
       // 获取安全警报
-      let alerts: any[];
+      let alerts: SecurityAlert[];
       if (severity && typeof severity === 'string') {
-        alerts = await securityLogService.getUnresolvedAlerts(severity as any, parseInt(limit as string));
+        alerts = await securityLogService.getUnresolvedAlerts(severity, parseInt(limit as string));
       } else {
-        alerts = await securityLogService.getUnresolvedAlerts(undefined, parseInt(limit as string));
+        alerts = await securityLogService.getUnresolvedAlerts('', parseInt(limit as string));
       }
 
       logger.info('Retrieved security alerts', {
@@ -149,7 +182,7 @@ class SecurityLogController {
       const { alertId } = req.params;
       const { resolutionNotes } = req.body || {};
       // 安全地获取用户ID，使用类型断言
-      const currentUserId = (req as any).user?.id;
+      const currentUserId = (req as AuthenticatedRequest).user?.userId;
 
       if (!currentUserId) {
         throw AppError.unauthorized('User not authenticated');
@@ -205,10 +238,10 @@ class SecurityLogController {
       const { userId } = req.params;
       // 获取用户安全报告
       const loginHistory = await securityLogService.getUserLoginHistory(userId);
-      const unresolvedAlerts = await securityLogService.getUnresolvedAlerts();
+      const unresolvedAlerts = await securityLogService.getUnresolvedAlerts('');
       
       // 筛选用户相关的警报
-      const userAlerts = unresolvedAlerts.filter((alert: any) => alert.user_id === userId);
+      const userAlerts = unresolvedAlerts.filter((alert: SecurityAlert) => alert.user_id === userId);
       
       // 构建报告
       const report = {
@@ -265,5 +298,4 @@ class SecurityLogController {
   };
 }
 
-// 使用CommonJS导出
-module.exports = SecurityLogController;
+export default SecurityLogController;

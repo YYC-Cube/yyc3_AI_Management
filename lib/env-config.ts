@@ -11,34 +11,34 @@ const envSchema = z.object({
   NODE_ENV: z
     .enum(["development", "production", "test"])
     .default("development"),
-  PORT: z.string().transform(Number).default(3001),
+  PORT: z.preprocess((v) => Number(v), z.number()).default(3001),
 
   // 数据库配置
   DB_HOST: z.string().min(1, "Database host is required"),
-  DB_PORT: z.string().transform(Number),
+  DB_PORT: z.preprocess((v) => Number(v), z.number()),
   DB_NAME: z.string().min(1, "Database name is required"),
   DB_USER: z.string().min(1, "Database user is required"),
   DB_PASSWORD: z.string().min(1, "Database password is required"),
-  DB_POOL_MAX: z.string().transform(Number).default(20),
-  DB_POOL_MIN: z.string().transform(Number).default(5),
-  DB_SSL: z
-    .string()
-    .transform((val) => val === "true")
-    .default(false),
+  DB_POOL_MAX: z.preprocess((v) => Number(v), z.number()).default(20),
+  DB_POOL_MIN: z.preprocess((v) => Number(v), z.number()).default(5),
+  DB_SSL: z.preprocess(
+    (val) => val === "true" || val === true,
+    z.boolean()
+  ).default(false),
 
   // Redis配置
   REDIS_HOST: z.string().min(1, "Redis host is required"),
-  REDIS_PORT: z.string().transform(Number),
+  REDIS_PORT: z.preprocess((v) => Number(v), z.number()),
   REDIS_PASSWORD: z.string().optional(),
-  REDIS_DB: z.string().transform(Number).default(0),
+  REDIS_DB: z.preprocess((v) => Number(v), z.number()).default(0),
   REDIS_KEY_PREFIX: z.string().default("yyc3:"),
 
   // OpenAI配置
   OPENAI_API_KEY: z.string().min(1, "OpenAI API key is required"),
   OPENAI_MODEL: z.string().default("gpt-4o"),
   OPENAI_ORGANIZATION: z.string().optional(),
-  OPENAI_MAX_TOKENS: z.string().transform(Number).default(4000),
-  OPENAI_TEMPERATURE: z.string().transform(Number).default(0.7),
+  OPENAI_MAX_TOKENS: z.preprocess((v) => Number(v), z.number()).default(4000),
+  OPENAI_TEMPERATURE: z.preprocess((v) => Number(v), z.number()).default(0.7),
 
   // JWT配置
   JWT_SECRET: z.string().min(32, "JWT secret must be at least 32 characters"),
@@ -50,15 +50,15 @@ const envSchema = z.object({
   LOG_FILE_PATH: z.string().default("./logs"),
 
   // WebSocket配置
-  WS_ENABLED: z
-    .string()
-    .transform((val) => val === "true")
-    .default(true),
-  WS_PORT: z.string().transform(Number).optional(),
-  WS_MAX_CONNECTIONS: z.string().transform(Number).default(1000),
+  WS_ENABLED: z.preprocess(
+    (val) => val === "true" || val === true,
+    z.boolean()
+  ).default(true),
+  WS_PORT: z.preprocess((v) => Number(v), z.number()).optional(),
+  WS_MAX_CONNECTIONS: z.preprocess((v) => Number(v), z.number()).default(1000),
 
   // 文件上传配置
-  UPLOAD_MAX_SIZE: z.string().transform(Number).default(10485760),
+  UPLOAD_MAX_SIZE: z.preprocess((v) => Number(v), z.number()).default(10485760),
   UPLOAD_PATH: z.string().default("./uploads"),
   UPLOAD_PROVIDER: z.enum(["local", "minio", "s3"]).default("local"),
 
@@ -71,12 +71,16 @@ const envSchema = z.object({
 
   // 安全配置
   CORS_ORIGIN: z.string().default("http://localhost:3000"),
-  RATE_LIMIT_WINDOW: z.string().transform(Number).default(15),
-  RATE_LIMIT_MAX: z.string().transform(Number).default(100),
-  HELMET_ENABLED: z
-    .string()
-    .transform((val) => val === "true")
-    .default(true),
+  RATE_LIMIT_WINDOW: z.preprocess((v) => Number(v), z.number()).default(15),
+  RATE_LIMIT_MAX: z.preprocess((v) => Number(v), z.number()).default(100),
+  HELMET_ENABLED: z.preprocess(
+    (val) => val === "true" || val === true,
+    z.boolean()
+  ).default(true),
+  HTTPS_ONLY: z.preprocess(
+    (val) => val === "true" || val === true,
+    z.boolean()
+  ).default(false),
 
   // 第三方集成（可选）
   SMTP_HOST: z.string().optional(),

@@ -6,6 +6,10 @@ import { csvImportDuration } from "../config/metrics"
 import type { CsvRecord, CsvImportBatch, ReconciliationException } from "../types/reconciliation"
 import { ReconciliationService } from "./reconciliation.service"
 
+interface DbRow {
+  [key: string]: unknown;
+}
+
 export class CsvImportService {
   private reconciliationService: ReconciliationService
 
@@ -149,7 +153,7 @@ export class CsvImportService {
       SELECT * FROM csv_import_batches
       WHERE 1=1
     `
-    const params: any[] = []
+    const params: unknown[] = []
     let paramIndex = 1
 
     if (status) {
@@ -240,7 +244,7 @@ export class CsvImportService {
         // 创建对账记录
         const record = await this.reconciliationService.createRecord({
           transactionDate: new Date(csvRecord.date),
-          transactionType: csvRecord.type as any,
+          transactionType: csvRecord.type as "bank" | "invoice" | "payment" | "refund",
           amount: csvRecord.amount,
           currency: csvRecord.currency,
           description: csvRecord.description,
@@ -393,22 +397,22 @@ export class CsvImportService {
     ])
   }
 
-  private mapDbBatchToModel(row: any): CsvImportBatch {
+  private mapDbBatchToModel(row: DbRow): CsvImportBatch {
     return {
-      id: row.id,
-      batchNumber: row.batch_number,
-      fileName: row.file_name,
-      fileSize: row.file_size,
-      totalRecords: row.total_records,
-      processedRecords: row.processed_records,
-      matchedRecords: row.matched_records,
-      unmatchedRecords: row.unmatched_records,
-      exceptionRecords: row.exception_records,
-      status: row.status,
-      importStartedAt: row.import_started_at,
-      importCompletedAt: row.import_completed_at,
-      importedBy: row.imported_by,
-      errorLog: row.error_log,
+      id: row.id as string,
+      batchNumber: row.batch_number as string,
+      fileName: row.file_name as string,
+      fileSize: Number(row.file_size),
+      totalRecords: Number(row.total_records),
+      processedRecords: Number(row.processed_records),
+      matchedRecords: Number(row.matched_records),
+      unmatchedRecords: Number(row.unmatched_records),
+      exceptionRecords: Number(row.exception_records),
+      status: row.status as CsvImportBatch['status'],
+      importStartedAt: new Date(row.import_started_at as string),
+      importCompletedAt: row.import_completed_at ? new Date(row.import_completed_at as string) : undefined,
+      importedBy: row.imported_by as string,
+      errorLog: row.error_log as string | undefined,
     }
   }
 }

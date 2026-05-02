@@ -16,7 +16,7 @@ import { useSound } from "./sound-system"
 
 interface SeasonalControlsProps {
   onSeasonChange: (season: Season) => void
-  onAutoDetectToggle: () => void
+  onAutoDetectToggle: (enabled: boolean) => void
   currentSeason: Season
   autoDetect: boolean
 }
@@ -66,13 +66,13 @@ export function SeasonalControls({
   const currentSeasonOption = seasonOptions.find((season) => season.id === currentSeason)
 
   const handleSeasonChange = (season: Season) => {
-    playSound("seasonal")
+    playSound("click" as any)
     onSeasonChange(season)
   }
 
   const handleAutoDetectToggle = () => {
-    playSound("click")
-    onAutoDetectToggle()
+    playSound("click" as any)
+    onAutoDetectToggle(!autoDetect)
   }
 
   return (

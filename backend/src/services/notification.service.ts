@@ -1,5 +1,4 @@
 import { redisPubSubService, RedisChannel, type PubSubMessage } from "./redis-pubsub.service"
-// @ts-ignore - server.ts使用CommonJS导出
 import { wsService } from '../server'
 import { logger } from "../config/logger"
 import { aiAnalysisTotal, aiAnalysisErrors, aiAnalysisLatency, aiTokensUsed } from "../config/metrics"
@@ -76,12 +75,12 @@ class NotificationService {
           notification = {
             id: `ai-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
             title: "AI 分析已启动",
-            message: `正在分析 ${data.recordCount} 条异常记录...`,
+            message: `正在分析 ${(data as Record<string, unknown>).recordCount} 条异常记录...`,
             type: "info",
             priority: "medium",
-            data,
+            data: data as Record<string, unknown>,
             userId,
-            actionUrl: `/finance/reconciliation/${data.reconciliationId}`,
+            actionUrl: `/finance/reconciliation/${(data as Record<string, unknown>).reconciliationId}`,
           }
           break
 
@@ -89,12 +88,12 @@ class NotificationService {
           notification = {
             id: `ai-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
             title: "AI 分析完成",
-            message: `成功分析 ${data.analysisCount} 条记录，发现 ${data.issueCount} 个问题`,
+            message: `成功分析 ${(data as Record<string, unknown>).analysisCount} 条记录，发现 ${(data as Record<string, unknown>).issueCount} 个问题`,
             type: "success",
             priority: "medium",
-            data,
+            data: data as Record<string, unknown>,
             userId,
-            actionUrl: `/finance/reconciliation/${data.reconciliationId}`,
+            actionUrl: `/finance/reconciliation/${(data as Record<string, unknown>).reconciliationId}`,
           }
 
           aiAnalysisTotal.inc()
@@ -104,12 +103,12 @@ class NotificationService {
           notification = {
             id: `ai-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
             title: "AI 分析失败",
-            message: data.error || "分析过程中出现错误",
+            message: (data as Record<string, unknown>).error as string || "分析过程中出现错误",
             type: "error",
             priority: "high",
-            data,
+            data: data as Record<string, unknown>,
             userId,
-            actionUrl: `/finance/reconciliation/${data.reconciliationId}`,
+            actionUrl: `/finance/reconciliation/${(data as Record<string, unknown>).reconciliationId}`,
           }
 
           aiAnalysisErrors.inc()
@@ -141,10 +140,10 @@ class NotificationService {
           notification = {
             id: `recon-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
             title: "对账任务已启动",
-            message: `开始处理 ${data.recordCount} 条记录`,
+            message: `开始处理 ${(data as Record<string, unknown>).recordCount} 条记录`,
             type: "info",
             priority: "low",
-            data,
+            data: data as Record<string, unknown>,
             userId,
           }
           break
@@ -153,10 +152,10 @@ class NotificationService {
           notification = {
             id: `recon-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
             title: "对账完成",
-            message: `匹配 ${data.matchedCount} 条，未匹配 ${data.unmatchedCount} 条`,
+            message: `匹配 ${(data as Record<string, unknown>).matchedCount} 条，未匹配 ${(data as Record<string, unknown>).unmatchedCount} 条`,
             type: "success",
             priority: "medium",
-            data,
+            data: data as Record<string, unknown>,
             userId,
           }
           break
@@ -165,10 +164,10 @@ class NotificationService {
           notification = {
             id: `recon-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
             title: "发现未匹配记录",
-            message: `有 ${data.unmatchedCount} 条记录需要人工处理`,
+            message: `有 ${(data as Record<string, unknown>).unmatchedCount} 条记录需要人工处理`,
             type: "warning",
             priority: "high",
-            data,
+            data: data as Record<string, unknown>,
             userId,
           }
           break
@@ -201,8 +200,11 @@ class NotificationService {
   private async sendNotification(payload: NotificationPayload): Promise<void> {
     try {
       if (payload.userId) {
-        // 发送给特定用户
-        wsService.sendNotificationToUser(payload.userId, payload)
+        wsService.sendMessageToUser(payload.userId, {
+          type: 'notification',
+          payload,
+          timestamp: new Date().toISOString()
+        })
       } else {
         // 广播给所有用户
         wsService.broadcastToRole("admin", {

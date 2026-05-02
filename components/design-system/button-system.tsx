@@ -8,7 +8,7 @@ import { Loader2 } from "lucide-react"
 interface DesignButtonProps {
   children: ReactNode
   variant?: "default" | "primary" | "secondary" | "ghost" | "cloud"
-  size?: "sm" | "md" | "lg"
+  size?: "default" | "sm" | "lg"
   loading?: boolean
   className?: string
   onClick?: () => void
@@ -28,7 +28,7 @@ const variantClasses = {
 export function DesignButton({
   children,
   variant = "default",
-  size = "md",
+  size = "default",
   loading = false,
   className,
   onClick,

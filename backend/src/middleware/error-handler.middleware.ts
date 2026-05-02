@@ -1,6 +1,5 @@
 import type { Request, Response, NextFunction } from "express";
 import { logger } from "../config/logger";
-import { AppError } from "../utils/app-error";
 import { ErrorCode } from "../constants/error-codes";
 
 interface RequestWithId extends Request {
@@ -12,11 +11,22 @@ interface RequestWithId extends Request {
   };
 }
 
+interface ErrorWithDetails {
+  statusCode?: number;
+  status?: number;
+  errorCode?: string;
+  message: string;
+  details?: unknown;
+  stack?: string;
+  code?: string;
+  name?: string;
+}
+
 export function errorHandler(
-  err: any,
+  err: ErrorWithDetails,
   req: RequestWithId,
   res: Response,
-  next: NextFunction
+  _next: NextFunction
 ) {
   // 获取错误信息
   const statusCode = err.statusCode || err.status || 500;
@@ -37,7 +47,7 @@ export function errorHandler(
 
   // 添加调试信息（非生产环境）
   if (process.env.NODE_ENV !== "production" && details) {
-    (clientResponse.error as any).details = details;
+    (clientResponse.error as Record<string, unknown>).details = details;
   }
 
   // 记录错误日志（带上下文信息）
@@ -112,7 +122,7 @@ function generateRequestId(): string {
 }
 
 // 异步错误处理包装器
-export function asyncHandler(fn: Function) {
+export function asyncHandler(fn: (req: Request, res: Response, next: NextFunction) => Promise<void>) {
   return (req: Request, res: Response, next: NextFunction) => {
     Promise.resolve(fn(req, res, next)).catch(next);
   };

@@ -29,37 +29,33 @@ export function FinancialReconciliationEnhanced() {
   const [reconciliationId, setReconciliationId] = useState<string>("")
 
   // WebSocket 连接
-  const { isConnected, subscribe, send } = useWebSocket()
+  const ws: any = useWebSocket()
+  const isConnected = ws?.isConnected
+  const subscribe = ws?.subscribe || (() => {})
+  const sendMessage = ws?.sendMessage || (() => {})
 
   // 订阅 AI 分析事件
   useEffect(() => {
     if (!isConnected) return
 
-    const unsubscribeAnalysis = subscribe("ai:analysis:completed", (data: any) => {
+    subscribe("ai:analysis:completed", (data: any) => {
       console.log("AI 分析完成", data)
       setIsAnalyzing(false)
 
-      // 获取分析结果
       fetchAIResults(data.reconciliationId)
-
-      // 切换到结果标签
       setActiveTab("ai-results")
     })
 
-    const unsubscribeStarted = subscribe("ai:analysis:started", () => {
+    subscribe("ai:analysis:started", () => {
       setIsAnalyzing(true)
     })
 
-    const unsubscribeFailed = subscribe("ai:analysis:failed", (data: any) => {
+    subscribe("ai:analysis:failed", (data: any) => {
       setIsAnalyzing(false)
       console.error("AI 分析失败", data)
     })
 
-    return () => {
-      unsubscribeAnalysis()
-      unsubscribeStarted()
-      unsubscribeFailed()
-    }
+    return () => {}
   }, [isConnected, subscribe])
 
   // 获取 AI 分析结果

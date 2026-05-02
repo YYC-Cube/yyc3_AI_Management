@@ -3,14 +3,14 @@ import { ErrorCode } from "../constants/error-codes";
 export class AppError extends Error {
   public statusCode: number;
   public errorCode: ErrorCode;
-  public details?: any;
+  public details?: unknown;
   public isOperational: boolean;
 
   constructor(
     message: string,
     statusCode: number = 500,
     errorCode: ErrorCode = ErrorCode.UNKNOWN_ERROR,
-    details?: any,
+    details?: unknown,
     isOperational: boolean = true
   ) {
     super(message);
@@ -25,7 +25,7 @@ export class AppError extends Error {
   static badRequest(
     message: string,
     errorCode: ErrorCode = ErrorCode.BAD_REQUEST,
-    details?: any
+    details?: unknown
   ): AppError {
     return new AppError(message, 400, errorCode, details);
   }
@@ -33,7 +33,7 @@ export class AppError extends Error {
   static unauthorized(
     message: string = "Unauthorized",
     errorCode: ErrorCode = ErrorCode.UNAUTHORIZED,
-    details?: any
+    details?: unknown
   ): AppError {
     return new AppError(message, 401, errorCode, details);
   }
@@ -41,7 +41,7 @@ export class AppError extends Error {
   static forbidden(
     message: string = "Forbidden",
     errorCode: ErrorCode = ErrorCode.FORBIDDEN,
-    details?: any
+    details?: unknown
   ): AppError {
     return new AppError(message, 403, errorCode, details);
   }
@@ -49,7 +49,7 @@ export class AppError extends Error {
   static tooManyRequests(
     message: string = "Too many requests",
     errorCode: ErrorCode = ErrorCode.TOO_MANY_REQUESTS,
-    details?: any
+    details?: unknown
   ): AppError {
     return new AppError(message, 429, errorCode, details);
   }
@@ -57,7 +57,7 @@ export class AppError extends Error {
   static notFound(
     message: string = "Resource not found",
     errorCode: ErrorCode = ErrorCode.NOT_FOUND,
-    details?: any
+    details?: unknown
   ): AppError {
     return new AppError(message, 404, errorCode, details);
   }
@@ -65,19 +65,19 @@ export class AppError extends Error {
   static conflict(
     message: string,
     errorCode: ErrorCode = ErrorCode.CONFLICT,
-    details?: any
+    details?: unknown
   ): AppError {
     return new AppError(message, 409, errorCode, details);
   }
 
-  static validationError(message: string, details?: any): AppError {
+  static validationError(message: string, details?: unknown): AppError {
     return new AppError(message, 422, ErrorCode.VALIDATION_ERROR, details);
   }
 
   static internal(
     message: string = "Internal server error",
     errorCode: ErrorCode = ErrorCode.INTERNAL_ERROR,
-    details?: any
+    details?: unknown
   ): AppError {
     return new AppError(message, 500, errorCode, details, true);
   }

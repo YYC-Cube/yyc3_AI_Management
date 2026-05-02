@@ -116,4 +116,4 @@ router.get('/database', async (req, res, next) => {
   }
 });
 
-module.exports = router;
+export default router;

@@ -1,3 +1,9 @@
+interface PermissionItem {
+  action: string;
+  resource: string;
+  resourceId: string;
+}
+
 export class PermissionService {
   // 权限检查函数，支持资源级别权限检查
   static async checkPermission(
@@ -52,9 +58,9 @@ export class PermissionService {
   }
 
   // 获取角色权限
-  private static async getRolePermissions(roles: string[]): Promise<any[]> {
+  private static async getRolePermissions(roles: string[]): Promise<PermissionItem[]> {
     // 模拟权限配置
-    const rolePermissions: Record<string, any[]> = {
+    const rolePermissions: Record<string, PermissionItem[]> = {
       admin: [{ action: "*", resource: "*", resourceId: "*" }],
       manager: [
         { action: "read", resource: "reconciliation", resourceId: "*" },
@@ -67,7 +73,7 @@ export class PermissionService {
       ],
     };
 
-    const permissions: any[] = [];
+    const permissions: PermissionItem[] = [];
     roles.forEach((role) => {
       if (rolePermissions[role]) {
         permissions.push(...rolePermissions[role]);

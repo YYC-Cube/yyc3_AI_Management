@@ -1,14 +1,19 @@
 import "../styles/globals.css"; // ✅ 引入全局样式
 import type React from "react";
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
 import { ThemeProvider } from "../theme-provider"; // ✅ 根目录引入
 import { I18nProvider } from "../components/providers/i18n-provider";
 import { MobileProvider } from "../components/providers/mobile-provider";
 import { NetworkStatusProvider } from "../components/providers/network-status-provider";
 import { Toaster } from "sonner";
 
-const inter = Inter({ subsets: ["latin"] });
+// 使用系统字体栈作为回退，避免构建时依赖外部网络
+const fontFamily = {
+  className: "font-sans",
+  style: {
+    fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+  },
+};
 
 export const metadata: Metadata = {
   title: "YanYu Cloud³ Cube · 智能云枢管理平台",
@@ -59,7 +64,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="zh-CN" dir="ltr">
+    <html lang="zh-CN" dir="ltr" suppressHydrationWarning>
       <head>
         {/* 预连接和预获取指令 */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -86,11 +91,16 @@ export default function RootLayout({
         <meta name="HandheldFriendly" content="true" />
         <meta name="MobileOptimized" content="320" />
       </head>
-      <body className={`${inter.className} overscroll-none`}>
+      <body className={`${fontFamily.className} overscroll-none`} style={fontFamily.style}>
         <MobileProvider>
           <NetworkStatusProvider>
             <I18nProvider>
-              <ThemeProvider>
+              <ThemeProvider
+                attribute="data-theme"
+                defaultTheme="light"
+                enableSystem
+                disableTransitionOnChange
+              >
                 {children}
                 <Toaster
                   position="top-center"

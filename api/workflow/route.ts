@@ -479,7 +479,7 @@ export async function completeWorkflowTask(
 
     const completedTask = await workflowEngine.completeWorkflowTask(
       params.id,
-      { action: "complete", ...body },
+      { ...body, action: "complete" },
       userId
     );
 
@@ -506,7 +506,7 @@ export async function rejectWorkflowTask(
 
     const rejectedTask = await workflowEngine.completeWorkflowTask(
       params.id,
-      { action: "reject", ...body },
+      { ...body, action: "reject" },
       userId
     );
 

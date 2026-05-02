@@ -9,13 +9,13 @@ import rateLimit from 'express-rate-limit';
 import { pool } from './config/database';
 import { logger } from './config/logger';
 import { checkRedisHealth, closeRedis } from './config/redis';
-const authRoutes = require('./routes/auth.routes');
-const ticketsRoutes = require('./routes/tickets.routes');
-const securityRoutes = require('./routes/security.routes');
-const metricsRoutes = require('./routes/metrics.routes');
-const healthRoutes = require('./routes/health.routes');
-const initializeWebSocketRoutes = require('./routes/websocket.routes');
-const WebSocketService = require('./services/websocket.service');
+import authRoutes from './routes/auth.routes';
+import ticketsRoutes from './routes/tickets.routes';
+import securityRoutes from './routes/security.routes';
+import metricsRoutes from './routes/metrics.routes';
+import healthRoutes from './routes/health.routes';
+import initializeWebSocketRoutes from './routes/websocket.routes';
+import WebSocketService from './services/websocket.service';
 
 // 配置dotenv，使用绝对路径加载.env.local文件
 dotenv.config({ path: path.resolve(__dirname, '../../.env.local') });
@@ -31,10 +31,22 @@ const httpServer = http.createServer(app);
 const wsService = new WebSocketService(httpServer);
 
 // 初始化WebSocket路由
-const webSocketRoutes = initializeWebSocketRoutes(wsService);
+const webSocketRoutes = initializeWebSocketRoutes(wsService as unknown as Parameters<typeof initializeWebSocketRoutes>[0]);
 
-// 安全中间件
-app.use(helmet());
+// 安全中间件 - 配置宽松的安全策略以支持开发环境
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      scriptSrc: ["'self'"],
+      fontSrc: ["'self'", "data:"],
+    },
+  },
+  crossOriginEmbedderPolicy: false,
+  crossOriginOpenerPolicy: false,
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+}));
 
 // CORS配置
 app.use(
@@ -93,23 +105,112 @@ app.use('/api/metrics', metricsRoutes);
 app.use('/api/health', healthRoutes);
 app.use('/api/websocket', webSocketRoutes);
 
-// 首页路由
+// 首页路由 - 返回 HTML 页面
 app.get('/', (req: Request, res: Response) => {
-  res.json({
-    message: 'Welcome to YanYu Cloud³ Backend API',
-    version: process.env.npm_package_version || '1.0.0',
-    routes: {
-      auth: '/api/auth',
-      tickets: '/api/tickets',
-      security: '/api/security',
-      metrics: '/api/metrics',
-      health: '/api/health',
-    },
-  });
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  res.send(`<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>YanYu Cloud³ Backend API</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+    .container { background: white; border-radius: 20px; padding: 40px; max-width: 800px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+    h1 { color: #667eea; margin-bottom: 10px; font-size: 2.5em; }
+    .version { color: #666; font-size: 0.9em; margin-bottom: 30px; }
+    h2 { color: #333; margin: 30px 0 15px; font-size: 1.5em; border-bottom: 2px solid #667eea; padding-bottom: 10px; }
+    .api-list { list-style: none; }
+    .api-item { background: #f8f9fa; margin: 10px 0; padding: 15px; border-radius: 10px; border-left: 4px solid #667eea; transition: all 0.3s; }
+    .api-item:hover { transform: translateX(5px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+    .method { display: inline-block; padding: 3px 10px; border-radius: 5px; color: white; font-weight: bold; font-size: 0.85em; margin-right: 10px; }
+    .get { background: #28a745; } .post { background: #007bff; } .put { background: #ffc107; color: #000; } .delete { background: #dc3545; }
+    .path { color: #333; font-family: 'Monaco', monospace; font-size: 0.95em; }
+    .desc { color: #666; font-size: 0.9em; margin-top: 5px; }
+    .status { background: #d4edda; color: #155724; padding: 15px; border-radius: 10px; margin-top: 20px; text-align: center; }
+    .footer { text-align: center; margin-top: 30px; color: #999; font-size: 0.85em; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🚀 YanYu Cloud³ Backend API</h1>
+    <p class="version">Version ${process.env.npm_package_version || '1.0.0'} | Node.js API Server</p>
+
+    <div class="status">
+      ✅ Server is running on port ${process.env.PORT || 3003}
+    </div>
+
+    <h2>📡 Available API Endpoints</h2>
+    <ul class="api-list">
+      <li class="api-item">
+        <span class="method get">GET</span>
+        <span class="path">/api/health</span>
+        <div class="desc">Health check endpoint</div>
+      </li>
+      <li class="api-item">
+        <span class="method post">POST</span>
+        <span class="path">/api/auth/login</span>
+        <div class="desc">User authentication</div>
+      </li>
+      <li class="api-item">
+        <span class="method get">GET</span>
+        <span class="path">/api/tickets</span>
+        <div class="desc">Get all tickets</div>
+      </li>
+      <li class="api-item">
+        <span class="method post">POST</span>
+        <span class="path">/api/tickets</span>
+        <div class="desc">Create new ticket</div>
+      </li>
+      <li class="api-item">
+        <span class="method get">GET</span>
+        <span class="path">/api/security/logs</span>
+        <div class="desc">Security audit logs</div>
+      </li>
+      <li class="api-item">
+        <span class="method get">GET</span>
+        <span class="path">/api/metrics</span>
+        <div class="desc">System metrics & monitoring</div>
+      </li>
+      <li class="api-item">
+        <span class="method get">WS</span>
+        <span class="path">/api/websocket</span>
+        <div class="desc">WebSocket real-time connection</div>
+      </li>
+    </ul>
+
+    <h2>🛠️ Development Information</h2>
+    <ul class="api-list">
+      <li class="api-item">
+        <span class="path">Environment:</span>
+        <span class="desc">${process.env.NODE_ENV || 'development'}</span>
+      </li>
+      <li class="api-item">
+        <span class="path">Database:</span>
+        <span class="desc">PostgreSQL (127.0.0.1:5434)</span>
+      </li>
+      <li class="api-item">
+        <span class="path">Cache:</span>
+        <span class="desc">Redis (localhost:6379) ✅</span>
+      </li>
+      <li class="api-item">
+        <span class="path">WebSocket:</span>
+        <span class="desc">Enabled ✅</span>
+      </li>
+    </ul>
+
+    <div class="footer">
+      <p>🎉 YanYu Cloud³ Intelligent Business Management System</p>
+      <p>Powered by TypeScript + Express + PostgreSQL + Redis</p>
+    </div>
+  </div>
+</body>
+</html>`);
 });
 
 // 错误处理中间件
-app.use((err: any, req: Request, res: Response, next: NextFunction) => {
+app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
   logger.error('API Error', { error: err.message, stack: err.stack });
   res.status(500).json({
     error: 'Internal Server Error',

@@ -350,7 +350,7 @@ export function DraggableListItem({
 // 长按手势组件
 interface LongPressProps {
   children: React.ReactNode;
-  onLongPress: () => void;
+  onLongPress: (e?: React.TouchEvent | React.MouseEvent) => void;
   delay?: number;
   className?: string;
 }
@@ -362,12 +362,12 @@ export function LongPress({
   className = "",
 }: LongPressProps) {
   const [isPressed, setIsPressed] = useState(false);
-  const timeoutRef = React.useRef<NodeJS.Timeout>();
+  const timeoutRef = React.useRef<NodeJS.Timeout | null>(null);
 
   const handleStart = () => {
     setIsPressed(true);
     timeoutRef.current = setTimeout(() => {
-      onLongPress();
+      onLongPress(undefined as any);
       setIsPressed(false);
     }, delay);
   };

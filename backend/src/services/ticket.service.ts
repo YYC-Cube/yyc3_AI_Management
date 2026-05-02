@@ -1,6 +1,34 @@
-// 直接导入和使用，避免变量重复声明
 import { pool } from '../config/database';
 import { logger } from '../config/logger';
+import type { Ticket, TicketMessage, TicketStats, TicketAttachment, TicketFilters } from '../types/ticket';
+
+interface TicketServiceFilters {
+  status?: string | string[];
+  priority?: string | string[];
+  category?: string | string[];
+  assignedTo?: string | string[];
+  createdBy?: string | string[];
+  customerName?: string;
+  dateFrom?: Date;
+  dateTo?: Date;
+  tags?: string | string[];
+  isOverdue?: boolean;
+  page?: number;
+  limit?: number;
+  sortBy?: string;
+  sortOrder?: string;
+}
+
+interface DbRow {
+  [key: string]: string | number | boolean | null | undefined;
+}
+
+interface DetailedTicketStats {
+  byStatus: Record<string, number>;
+  byPriority: Record<string, number>;
+  total: number;
+  slaCompliance: number;
+}
 
 /**
  * 工单服务类
@@ -20,7 +48,7 @@ export default class TicketService {
    * @param {string} [filters.sortOrder='desc'] - 排序顺序
    * @returns {Promise<Array>} 工单列表
    */
-  async getTickets(filters: any = {}): Promise<Array<any>> {
+  async getTickets(filters: TicketServiceFilters = {}): Promise<Ticket[]> {
     const {
       status,
       priority,
@@ -91,7 +119,7 @@ export default class TicketService {
    * @param {string} ticketId - 工单ID
    * @returns {Promise<Object|null>} 工单对象
    */
-  async getTicketById(ticketId: string): Promise<any | null> {
+  async getTicketById(ticketId: string): Promise<Ticket | null> {
     try {
       const query = `
         SELECT * FROM support_tickets
@@ -130,7 +158,7 @@ export default class TicketService {
    * @param {Array} [ticketData.tags] - 标签列表
    * @returns {Promise<Object>} 创建的工单
    */
-  async createTicket(ticketData: { title: string; description: string; category: string; priority: string; createdBy: string; customerName?: string; customerEmail?: string; customerPhone?: string; tags?: string[] }): Promise<any> {
+  async createTicket(ticketData: { title: string; description: string; category: string; priority: string; createdBy: string; customerName?: string; customerEmail?: string; customerPhone?: string; tags?: string[] }): Promise<Ticket> {
     try {
       const {
         title,
@@ -214,7 +242,7 @@ export default class TicketService {
    * @param {string} userId - 操作用户ID
    * @returns {Promise<Object|null>} 更新后的工单
    */
-  async updateTicket(ticketId: string, updateData: { title?: string; description?: string; category?: string; priority?: string; status?: string; assignedTo?: string; tags?: string[] }, userId: string): Promise<any | null> {
+  async updateTicket(ticketId: string, updateData: { title?: string; description?: string; category?: string; priority?: string; status?: string; assignedTo?: string; tags?: string[] }, userId: string): Promise<Ticket | null> {
     try {
       // 先获取当前工单
       const currentTicket = await this.getTicketById(ticketId);
@@ -287,7 +315,7 @@ export default class TicketService {
    * @param {string} userId - 操作用户ID
    * @returns {Promise<Object|null>} 关闭后的工单
    */
-  async closeTicket(ticketId: string, resolutionNotes: string, userId: string): Promise<any | null> {
+  async closeTicket(ticketId: string, resolutionNotes: string, userId: string): Promise<Ticket | null> {
     try {
       // 先获取当前工单
       const currentTicket = await this.getTicketById(ticketId);
@@ -336,7 +364,7 @@ export default class TicketService {
    * @param {string} userId - 操作用户ID
    * @returns {Promise<Object|null>} 分配后的工单
    */
-  async assignTicket(ticketId: string, assigneeId: string, userId: string): Promise<any | null> {
+  async assignTicket(ticketId: string, assigneeId: string, userId: string): Promise<Ticket | null> {
     try {
       // 先获取当前工单
       const currentTicket = await this.getTicketById(ticketId);
@@ -359,8 +387,8 @@ export default class TicketService {
       await this.logAudit(
         ticketId,
         'assign',
-        { assigned_to: currentTicket.assigned_to },
-        { assigned_to: assigneeId },
+        { assignedTo: currentTicket.assignedTo },
+        { assignedTo: assigneeId },
         userId
       );
 
@@ -388,7 +416,7 @@ export default class TicketService {
    * @param {Array} [messageData.attachments=[]] - 附件列表
    * @returns {Promise<Object>} 创建的消息
    */
-  async addTicketMessage(ticketId: string, messageData: { content: string; sender: string; senderName: string; isInternal?: boolean; attachments?: any[] }): Promise<any> {
+  async addTicketMessage(ticketId: string, messageData: { content: string; sender: string; senderName: string; isInternal?: boolean; attachments?: TicketAttachment[] }): Promise<TicketMessage> {
     try {
       // 检查工单是否存在
       const ticket = await this.getTicketById(ticketId);
@@ -444,7 +472,7 @@ export default class TicketService {
    * @param {Object} filters - 过滤条件
    * @returns {Promise<Object>} 统计数据
    */
-  async getTicketStats(filters: { startDate?: string; endDate?: string } = {}): Promise<any> {
+  async getTicketStats(filters: { startDate?: string; endDate?: string } = {}): Promise<DetailedTicketStats> {
     try {
       // 按状态统计
       const statusQuery = `
@@ -475,15 +503,15 @@ export default class TicketService {
 
       // 格式化结果
       return {
-        byStatus: statusResult.rows.reduce((acc: Record<string, number>, row: any) => {
-          acc[row.status] = parseInt(row.count);
+        byStatus: statusResult.rows.reduce((acc: Record<string, number>, row: DbRow) => {
+          acc[row.status as string] = parseInt(row.count as string);
           return acc;
         }, {}),
-        byPriority: priorityResult.rows.reduce((acc: Record<string, number>, row: any) => {
-          acc[row.priority] = parseInt(row.count);
+        byPriority: priorityResult.rows.reduce((acc: Record<string, number>, row: DbRow) => {
+          acc[row.priority as string] = parseInt(row.count as string);
           return acc;
         }, {}),
-        total: statusResult.rows.reduce((sum: number, row: any) => sum + parseInt(row.count), 0),
+        total: statusResult.rows.reduce((sum: number, row: DbRow) => sum + parseInt(row.count as string), 0),
         slaCompliance: this.calculateSlaCompliance(),
       };
     } catch (error: unknown) {
@@ -512,7 +540,7 @@ export default class TicketService {
    * @param {string} ticketId - 工单ID
    * @returns {Promise<Array>} 消息列表
    */
-  async getTicketMessages(ticketId: string): Promise<Array<any>> {
+  async getTicketMessages(ticketId: string): Promise<TicketMessage[]> {
     const query = `
       SELECT * FROM ticket_messages
       WHERE ticket_id = $1
@@ -573,7 +601,7 @@ export default class TicketService {
    * @param {string} userId - 用户ID
    * @returns {Promise<void>}
    */
-  async logAudit(ticketId: string, action: string, oldValue: any, newValue: any, userId: string): Promise<void> {
+  async logAudit(ticketId: string, action: string, oldValue: Record<string, unknown> | Ticket | null, newValue: Record<string, unknown> | Ticket | null, userId: string): Promise<void> {
     const query = `
       INSERT INTO ticket_audit_log (
         ticket_id, action, old_value, new_value, performed_by
@@ -588,25 +616,25 @@ export default class TicketService {
    * @param {Array} [messages=[]] - 消息列表
    * @returns {Object} 模型对象
    */
-  mapDbTicketToModel(row: any, messages: Array<any> = []): any {
+  mapDbTicketToModel(row: DbRow, messages: TicketMessage[] = []): Ticket {
     return {
-      id: row.id,
-      ticketNumber: row.ticket_number,
-      title: row.title,
-      description: row.description,
-      category: row.category,
-      priority: row.priority,
-      status: row.status,
-      createdBy: row.created_by || 'system',
-      assignedTo: row.assigned_to,
-      customerName: row.customer_name,
-      customerEmail: row.customer_email,
-      customerPhone: row.customer_phone,
-      tags: row.tags || [],
-      slaDeadline: row.due_date,
-      resolvedAt: row.resolved_at,
-      createdAt: row.created_at,
-      updatedAt: row.updated_at,
+      id: row.id as string,
+      ticketNumber: row.ticket_number as string,
+      title: row.title as string,
+      description: row.description as string,
+      category: row.category as Ticket['category'],
+      priority: row.priority as Ticket['priority'],
+      status: row.status as Ticket['status'],
+      createdBy: (row.created_by as string) || 'system',
+      assignedTo: row.assigned_to as string | undefined,
+      customerName: row.customer_name as string,
+      customerEmail: row.customer_email as string,
+      customerPhone: row.customer_phone as string | undefined,
+      tags: (row.tags as unknown as string[]) || [],
+      slaDeadline: row.due_date ? new Date(row.due_date as string) : undefined,
+      resolvedAt: row.resolved_at ? new Date(row.resolved_at as string) : undefined,
+      createdAt: new Date(row.created_at as string),
+      updatedAt: new Date(row.updated_at as string),
     };
   }
 
@@ -615,16 +643,16 @@ export default class TicketService {
    * @param {Object} row - 数据库行
    * @returns {Object} 消息模型
    */
-  mapDbMessageToModel(row: any): any {
+  mapDbMessageToModel(row: DbRow): TicketMessage {
     return {
-      id: row.id,
-      ticketId: row.ticket_id,
-      content: row.content,
-      authorId: row.sender,
-      authorName: row.sender_name,
-      isInternal: row.is_internal,
-      attachments: row.attachments,
-      createdAt: row.timestamp,
+      id: row.id as string,
+      ticketId: row.ticket_id as string,
+      content: row.content as string,
+      authorId: row.sender as string,
+      authorName: row.sender_name as string,
+      isInternal: Boolean(row.is_internal),
+      attachments: row.attachments as TicketAttachment[] | undefined,
+      createdAt: new Date(row.timestamp as string),
     };
   }
 }

@@ -1,26 +1,80 @@
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-primary: var(--primary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-border: var(--border);
-  --color-ring: var(--ring);
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
-  --font-sans: var(--font-sans);
-  --text-base: var(--text-base);
-  --leading-normal: var(--leading-normal);
-  /* ...其他 sidebar 映射 */
-}
-
+/* Light Theme */
 [data-theme="light"] {
   --background: #ffffff;
-  --foreground: #1a1a1a;
+  --foreground: #111827;
+  --background-secondary: #f9fafb;
+  --background-tertiary: #f3f4f6;
+
+  --text-primary: #111827;
+  --text-secondary: #374151;
+  --text-tertiary: #6b7280;
+  --text-inverse: #ffffff;
+
+  --border-color: #e5e7eb;
+  --border-light: #f3f4f6;
+
+  --card-bg: #ffffff;
+  --card-border: #e5e7eb;
+  --card-shadow: var(--shadow-md);
+
+  --input-bg: #ffffff;
+  --input-border: #d1d5db;
+  --input-focus: var(--primary-500);
+
+  --sidebar-bg: #f9fafb;
+  --sidebar-text: #374151;
+  --sidebar-hover: #f3f4f6;
+
+  --header-bg: rgba(255, 255, 255, 0.95);
+  --header-border: #e5e7eb;
+
+  color-scheme: light;
 }
 
+/* Dark Theme */
 [data-theme="dark"] {
-  --background: #1a1a1a;
-  --foreground: #ffffff;
+  --background: #0f172a;
+  --foreground: #f1f5f9;
+  --background-secondary: #1e293b;
+  --background-tertiary: #334155;
+
+  --text-primary: #f1f5f9;
+  --text-secondary: #cbd5e1;
+  --text-tertiary: #94a3b8;
+  --text-inverse: #0f172a;
+
+  --border-color: #334155;
+  --border-light: #1e293b;
+
+  --card-bg: #1e293b;
+  --card-border: #334155;
+  --card-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.3), 0 2px 4px -2px rgb(0 0 0 / 0.2);
+
+  --input-bg: #1e293b;
+  --input-border: #475569;
+  --input-focus: var(--primary-400);
+
+  --sidebar-bg: #1e293b;
+  --sidebar-text: #cbd5e1;
+  --sidebar-hover: #334155;
+
+  --header-bg: rgba(15, 23, 42, 0.95);
+  --header-border: #334155;
+
+  color-scheme: dark;
+}
+
+/* Theme Transitions */
+html {
+  transition: background-color var(--transition-normal), color var(--transition-normal);
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }

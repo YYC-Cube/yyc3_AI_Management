@@ -1,4 +1,10 @@
+import dotenv from 'dotenv';
+import path from 'path';
 import { logger } from './logger';
+
+// 加载环境变量
+dotenv.config({ path: '/Users/my/Downloads/yyc3-AI-Management/.env.local' });
+
 import { Pool } from 'pg';
 
 // 定义连接池配置
@@ -15,9 +21,9 @@ type PoolConfigType = {
 };
 
 const poolConfig: PoolConfigType = {
-  host: process.env.DB_HOST || "localhost",
+  host: process.env.DB_HOST || "127.0.0.1",
   port: Number.parseInt(process.env.DB_PORT || "5432"),
-  database: process.env.DB_NAME || "yanyu_reconciliation",
+  database: process.env.DB_NAME || "yyc3_management",
   user: process.env.DB_USER || "postgres",
   password: process.env.DB_PASSWORD || "postgres",
   max: Number.parseInt(process.env.DB_POOL_MAX || "20"),
@@ -60,8 +66,8 @@ const checkDatabaseHealth = async (): Promise<boolean> => {
  */
 const queryWithMetrics = async (
   text: string,
-  params: Array<any> = []
-): Promise<any> => {
+  params: unknown[] = []
+): Promise<unknown> => {
   const start = Date.now();
   try {
     const result = await pool.query(text, params);
@@ -89,7 +95,7 @@ const queryWithMetrics = async (
 
 // 事务处理函数
 const withTransaction = async <T>(
-  callback: (client: any) => Promise<T>
+  callback: (client: unknown) => Promise<T>
 ): Promise<T> => {
   const client = await pool.connect();
   try {
