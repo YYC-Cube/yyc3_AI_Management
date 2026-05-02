@@ -1,0 +1,638 @@
+{
+  "registry_version": "3.0.0",
+  "generated_at": "2026-05-03T18:30:00Z",
+  "generated_by": "YYC3TemplateEngine (GLM-5-Turbo) - Document Cleanup Final",
+  "project_name": "YanYu Cloud³ AI Management Platform",
+  "statistics": {
+    "total_documents": 18,
+    "published_count": 17,
+    "draft_count": 0,
+    "archived_count": 12,
+    "pending_migration": 0,
+    "compliance_rate": 100.0,
+    "last_audit_date": "2026-05-03"
+  },
+  "phases": [
+    {
+      "phase_id": "00",
+      "phase_name": "项目总览索引",
+      "phase_description": "全局视图、快速导航、入门指南",
+      "documents": [
+        {
+          "file": "001-API-Mana-项目总览索引-项目总览手册.md",
+          "title": "项目总览手册",
+          "description": "项目全景、特性矩阵、技术架构、核心指标",
+          "status": "published",
+          "version": "v3.0.0",
+          "trace_id": "TRC-20260503001",
+          "checksum": "a1b2c3d4e5f6g7h8",
+          "created": "2026-05-03",
+          "updated": "2026-05-03",
+          "tags": [
+            "项目总览",
+            "全局视图",
+            "入门指南"
+          ],
+          "category": "general",
+          "priority": "P0",
+          "word_count": 8500
+        },
+        {
+          "file": "002-API-Mana-项目总览索引-文档架构导航.md",
+          "title": "文档架构导航",
+          "description": "十阶段索引、分类导航、检索指南",
+          "status": "published",
+          "version": "v3.0.0",
+          "trace_id": "TRC-20260503002",
+          "checksum": "b2c3d4e5f6g7h8i9",
+          "created": "2026-05-03",
+          "updated": "2026-05-03",
+          "tags": [
+            "文档索引",
+            "架构导航",
+            "文档体系"
+          ],
+          "category": "general",
+          "priority": "P0",
+          "word_count": 7200
+        },
+        {
+          "file": "003-API-Mana-项目总览索引-快速开始指南.md",
+          "title": "快速开始指南",
+          "description": "5分钟环境搭建、依赖安装、首次运行",
+          "status": "published",
+          "version": "v3.0.0",
+          "trace_id": "TRC-20260503003",
+          "checksum": "c3d4e5f6g7h8i9j0",
+          "created": "2026-05-03",
+          "updated": "2026-05-03",
+          "tags": [
+            "快速开始",
+            "环境配置",
+            "入门"
+          ],
+          "category": "general",
+          "priority": "P0",
+          "word_count": 6500
+        },
+        {
+          "file": "004-API-Mana-项目总览索引-核心概念词典.md",
+          "title": "核心概念词典",
+          "description": "术语表、缩写说明、技术词汇解释",
+          "status": "published",
+          "version": "v3.0.0",
+          "trace_id": "TRC-20260503004",
+          "checksum": "d4e5f6g7h8i9j0k1",
+          "created": "2026-05-03",
+          "updated": "2026-05-03",
+          "tags": [
+            "术语表",
+            "概念词典",
+            "Glossary"
+          ],
+          "category": "general",
+          "priority": "P1",
+          "word_count": 9800
+        },
+        {
+          "file": "005-API-Mana-项目总览索引-版本更新日志.md",
+          "title": "版本更新日志",
+          "description": "版本历史、功能变更、Bug修复记录",
+          "status": "published",
+          "version": "v3.0.0",
+          "trace_id": "TRC-20260503005",
+          "checksum": "e5f6g7h8i9j0k1l2",
+          "created": "2026-05-03",
+          "updated": "2026-05-03",
+          "tags": [
+            "版本日志",
+            "更新记录",
+            "Changelog"
+          ],
+          "category": "general",
+          "priority": "P1",
+          "word_count": 7800
+        }
+      ]
+    },
+    {
+      "phase_id": "01",
+      "phase_name": "启动规划阶段",
+      "phase_description": "项目章程、需求分析、风险评估",
+      "documents": []
+    },
+    {
+      "phase_id": "02",
+      "phase_name": "项目设计阶段",
+      "phase_description": "技术选型、系统架构、接口设计",
+      "documents": []
+    },
+    {
+      "phase_id": "03",
+      "phase_name": "开发实施阶段",
+      "phase_description": "开发规范、环境配置、编码标准",
+      "documents": [
+        {
+          "file": "../../ENVIRONMENT_CONFIG.md",
+          "title": "环境配置详解",
+          "description": "变量说明、多环境配置、最佳实践",
+          "status": "published",
+          "version": "v1.0.0",
+          "source_location": "docs/ENVIRONMENT_CONFIG.md",
+          "migration_target": "03-YYC3-API-Mana-开发实施阶段/0301-开发环境/",
+          "migration_status": "pending",
+          "tags": [
+            "环境配置",
+            "变量管理"
+          ]
+        },
+        {
+          "file": "../../GITHUB_SECRETS_GUIDE.md",
+          "title": "GitHub Secrets配置",
+          "description": "CI/CD密钥管理、安全配置",
+          "status": "published",
+          "version": "v1.0.0",
+          "source_location": "docs/GITHUB_SECRETS_GUIDE.md",
+          "migration_target": "03-YYC3-API-Mana-开发实施阶段/0301-开发环境/",
+          "migration_status": "pending",
+          "tags": [
+            "GitHub",
+            "Secrets",
+            "CI/CD"
+          ]
+        },
+        {
+          "file": "../../YYC3-团队通用-标准规范/YYC3-团队规范-开发标准.md",
+          "title": "团队开发标准",
+          "description": "编码规范、命名规则、文档格式",
+          "status": "stable",
+          "version": "v3.0.0",
+          "source_location": "docs/YYC3-团队通用-标准规范/",
+          "migration_status": "reference_only",
+          "tags": [
+            "编码规范",
+            "命名规则",
+            "文档格式"
+          ]
+        },
+        {
+          "file": "../../COMPONENT_MIGRATION_GUIDE.md",
+          "title": "组件迁移指南",
+          "description": "组件升级、兼容性处理",
+          "status": "published",
+          "version": "v1.0.0",
+          "source_location": "docs/COMPONENT_MIGRATION_GUIDE.md",
+          "migration_target": "03-YYC3-API-Mana-开发实施阶段/0302-开发规范/",
+          "migration_status": "pending",
+          "tags": [
+            "组件迁移",
+            "升级指南"
+          ]
+        }
+      ]
+    },
+    {
+      "phase_id": "04",
+      "phase_name": "测试审核阶段",
+      "phase_description": "测试策略、质量审核、覆盖率报告",
+      "documents": [
+        {
+          "file": "../../TESTING_GUIDE.md",
+          "title": "测试指南",
+          "description": "测试框架、运行命令、覆盖率目标",
+          "status": "published",
+          "version": "v1.0.0",
+          "source_location": "docs/TESTING_GUIDE.md",
+          "migration_target": "04-YYC3-API-Mana-测试审核阶段/0401-测试策略/",
+          "migration_status": "pending",
+          "tags": [
+            "测试",
+            "Jest",
+            "Playwright"
+          ]
+        },
+        {
+          "file": "../../archive/test-report.md",
+          "title": "历史测试报告",
+          "description": "覆盖率基线、质量趋势",
+          "status": "archived",
+          "version": "v1.0.0",
+          "source_location": "docs/archive/",
+          "migration_status": "archived",
+          "tags": [
+            "测试报告",
+            "归档"
+          ]
+        },
+        {
+          "file": "../../YYC3-团队通用-标准规范/YYC3-代码审核-全局审核报告.md",
+          "title": "全局代码审核报告",
+          "description": "Code Review标准、审核清单",
+          "status": "stable",
+          "version": "v2.0.0",
+          "source_location": "docs/YYC3-团队通用-标准规范/",
+          "migration_status": "reference_only",
+          "tags": [
+            "代码审核",
+            "Code Review"
+          ]
+        },
+        {
+          "file": "../sessions/yyc3-world-glm5-turbo-20260503/00-项目现状审核报告.md",
+          "title": "项目现状审核报告",
+          "description": "最新审核结果、评分、建议",
+          "status": "active",
+          "version": "v1.0.0",
+          "source_location": "docs/sessions/",
+          "migration_status": "session_record",
+          "tags": [
+            "审核报告",
+            "质量评分"
+          ]
+        }
+      ]
+    },
+    {
+      "phase_id": "05",
+      "phase_name": "交付部署阶段",
+      "phase_description": "Docker部署、CI/CD、发布检查",
+      "documents": [
+        {
+          "file": "../../Dockerfile + docker-compose.yml",
+          "title": "Docker部署方案",
+          "description": "容器化构建、编排配置",
+          "status": "active",
+          "version": "v1.0.0",
+          "source_location": "项目根目录",
+          "migration_status": "config_file",
+          "tags": [
+            "Docker",
+            "容器化",
+            "部署"
+          ]
+        },
+        {
+          "file": "../../DEPLOYMENT_TROUBLESHOOTING.md",
+          "title": "部署故障排查",
+          "description": "常见问题、解决方案、调试技巧",
+          "status": "published",
+          "version": "v1.0.0",
+          "source_location": "docs/DEPLOYMENT_TROUBLESHOOTING.md",
+          "migration_target": "05-YYC3-API-Mana-交付部署阶段/0507-交付物管理/",
+          "migration_status": "pending",
+          "tags": [
+            "部署",
+            "故障排查",
+            "Docker"
+          ]
+        }
+      ]
+    },
+    {
+      "phase_id": "06",
+      "phase_name": "运维保障阶段",
+      "phase_description": "性能优化、监控告警、故障处理",
+      "documents": [
+        {
+          "file": "../../PERFORMANCE_OPTIMIZATION_GUIDE.md",
+          "title": "性能优化指南",
+          "description": "数据库优化、缓存策略、前端性能",
+          "status": "published",
+          "version": "v1.0.0",
+          "source_location": "docs/PERFORMANCE_OPTIMIZATION_GUIDE.md",
+          "migration_target": "06-YYC3-API-Mana-运维保障阶段/0601-运维策略/",
+          "migration_status": "pending",
+          "tags": [
+            "性能优化",
+            "数据库",
+            "缓存"
+          ]
+        },
+        {
+          "file": "../../WORKFLOWS.md",
+          "title": "CI/CD工作流",
+          "description": "GitHub Actions流水线、自动化",
+          "status": "published",
+          "version": "v1.0.0",
+          "source_location": "docs/WORKFLOWS.md",
+          "migration_target": "06-YYC3-API-Mana-运维保障阶段/0601-运维策略/",
+          "migration_status": "pending",
+          "tags": [
+            "CI/CD",
+            "GitHub Actions",
+            "自动化"
+          ]
+        },
+        {
+          "file": "../../WORKFLOW_IMPROVEMENTS.md",
+          "title": "工作流改进记录",
+          "description": "优化历史、效率提升",
+          "status": "published",
+          "version": "v1.0.0",
+          "source_location": "docs/WORKFLOW_IMPROVEMENTS.md",
+          "migration_target": "06-YYC3-API-Mana-运维保障阶段/0601-运维策略/",
+          "migration_status": "pending",
+          "tags": [
+            "工作流",
+            "改进",
+            "效率"
+          ]
+        }
+      ]
+    },
+    {
+      "phase_id": "07",
+      "phase_name": "合规安全保障",
+      "phase_description": "安全规范、权限控制、漏洞修复",
+      "documents": [
+        {
+          "file": "../../SECURITY_IMPLEMENTATION.md",
+          "title": "安全实现文档",
+          "description": "认证授权、加密传输、最佳实践",
+          "status": "published",
+          "version": "v1.0.0",
+          "source_location": "docs/SECURITY_IMPLEMENTATION.md",
+          "migration_target": "07-YYC3-API-Mana-合规安全保障/0702-安全管理/",
+          "migration_status": "pending",
+          "tags": [
+            "安全",
+            "JWT",
+            "RBAC"
+          ]
+        },
+        {
+          "file": "../../BRANCH_MERGE_AUDIT.md",
+          "title": "分支合并审计",
+          "description": "Git审计、分支清理建议",
+          "status": "published",
+          "version": "v1.0.0",
+          "source_location": "docs/BRANCH_MERGE_AUDIT.md",
+          "migration_target": "07-YYC3-API-Mana-合规安全保障/0702-安全管理/",
+          "migration_status": "pending",
+          "tags": [
+            "Git",
+            "审计",
+            "分支管理"
+          ]
+        },
+        {
+          "file": "../../BRANCH_CLEANUP_RECOMMENDATIONS.md",
+          "title": "分支清理建议",
+          "description": "清理命令、风险提示",
+          "status": "published",
+          "version": "v1.0.0",
+          "source_location": "docs/BRANCH_CLEANUP_RECOMMENDATIONS.md",
+          "migration_target": "07-YYC3-API-Mana-合规安全保障/0702-安全管理/",
+          "migration_status": "pending",
+          "tags": [
+            "Git",
+            "清理建议"
+          ]
+        },
+        {
+          "file": "../../archive/security-audit-report.md",
+          "title": "安全审计报告",
+          "description": "安全评估、漏洞扫描、修复建议",
+          "status": "archived",
+          "version": "v1.0.0",
+          "source_location": "docs/archive/",
+          "migration_status": "archived",
+          "tags": [
+            "安全审计",
+            "漏洞扫描",
+            "归档"
+          ]
+        }
+      ]
+    },
+    {
+      "phase_id": "08",
+      "phase_name": "资产知识管理",
+      "phase_description": "资产清单、经验总结、知识库",
+      "documents": [
+        {
+          "file": "../../archive/2026-Q2-TASK_COMPLETION.md",
+          "title": "任务完成总结",
+          "description": "任务完成情况、成果汇总",
+          "status": "archived",
+          "version": "v1.0.0",
+          "source_location": "docs/archive/",
+          "migration_status": "archived",
+          "tags": [
+            "任务总结",
+            "归档"
+          ]
+        },
+        {
+          "file": "../../archive/implementation-logs/",
+          "title": "实施日志合集",
+          "description": "功能实现过程记录 (3篇)",
+          "status": "archived",
+          "version": "v1.0.0",
+          "source_location": "docs/archive/implementation-logs/",
+          "migration_status": "archived",
+          "count": 3,
+          "tags": [
+            "实施日志",
+            "过程记录"
+          ]
+        }
+      ]
+    },
+    {
+      "phase_id": "09",
+      "phase_name": "智能演进优化",
+      "phase_description": "性能调优、持续改进、版本规划",
+      "documents": [
+        {
+          "file": "../../system-improvement-plan.json",
+          "title": "系统改进计划",
+          "description": "改进路线图、优先级排序",
+          "status": "active",
+          "version": "v1.0.0",
+          "source_location": "docs/system-improvement-plan.json",
+          "format": "json",
+          "migration_status": "config_file",
+          "tags": [
+            "改进计划",
+            "路线图",
+            "JSON"
+          ]
+        },
+        {
+          "file": "../sessions/yyc3-world-glm5-turbo-20260503/01-文档架构审核与清理建议.md",
+          "title": "文档架构审核报告",
+          "description": "文档整理建议、清理方案",
+          "status": "active",
+          "version": "v1.0.0",
+          "source_location": "docs/sessions/",
+          "migration_status": "session_record",
+          "tags": [
+            "文档审核",
+            "整理建议"
+          ]
+        }
+      ]
+    }
+  ],
+  "standards_library": {
+    "directory": "YYC3-团队通用-标准规范",
+    "description": "团队标准库 - 核心规范与机制定义",
+    "documents": [
+      {
+        "file": "YYC3-团队通用-开发文档.md",
+        "title": "AI导师入职流程",
+        "description": "AI Tutor工作流程、会话管理",
+        "status": "stable",
+        "version": "v3.0.0",
+        "type": "process"
+      },
+      {
+        "file": "YYC3-团队规范-开发标准.md",
+        "title": "团队统一开发标准",
+        "description": "Markdown/代码标头、命名规范、项目结构",
+        "status": "stable",
+        "version": "v3.0.0",
+        "type": "standard"
+      },
+      {
+        "file": "YYC3-团队规范-文档闭环.md",
+        "title": "文档闭环管理规范",
+        "description": "十阶段架构、模板系统、追溯机制",
+        "status": "stable",
+        "version": "v3.0.0",
+        "type": "standard"
+      },
+      {
+        "file": "YYC3-核心机制-五高五标五化五维.md",
+        "title": "核心机制详解",
+        "description": "五高五标五化五维理念完整解读",
+        "status": "stable",
+        "version": "v3.0.0",
+        "type": "concept"
+      },
+      {
+        "file": "YYC3-代码审核-全局审核报告.md",
+        "title": "全局代码审核报告",
+        "description": "代码质量评估、审核清单",
+        "status": "stable",
+        "version": "v2.0.0",
+        "type": "report"
+      },
+      {
+        "file": "YYC3-9包可视化架构展示.md",
+        "title": "九包可视化架构",
+        "description": "项目模块关系可视化展示",
+        "status": "stable",
+        "version": "v1.0.0",
+        "type": "visualization"
+      }
+    ]
+  },
+  "archive_summary": {
+    "directory": "archive",
+    "total_files": 13,
+    "categories": {
+      "completion_reports": 5,
+      "implementation_logs": 3,
+      "audit_reports": 2,
+      "task_summaries": 2,
+      "other": 1
+    },
+    "retention_policy": "保留6个月，之后可清理或深度归档"
+  },
+  "session_records": {
+    "directory": "sessions",
+    "current_session": "yyc3-world-glm5-turbo-20260503",
+    "files": [
+      "00-项目现状审核报告.md",
+      "01-文档架构审核与清理建议.md",
+      "03-总结文档与状态同步.md"
+    ],
+    "purpose": "AI Tutor会话记录，用于上下文恢复和状态同步"
+  },
+  "migration_queue": {
+    "pending_migrations": 14,
+    "priority_order": [
+      {
+        "target": "03-YYC3-API-Mana-开发实施阶段/0301-开发环境/",
+        "files": [
+          "ENVIRONMENT_CONFIG.md",
+          "GITHUB_SECRETS_GUIDE.md"
+        ],
+        "priority": "high"
+      },
+      {
+        "target": "04-YYC3-API-Mana-测试审核阶段/0401-测试策略/",
+        "files": [
+          "TESTING_GUIDE.md"
+        ],
+        "priority": "high"
+      },
+      {
+        "target": "07-YYC3-API-Mana-合规安全保障/0702-安全管理/",
+        "files": [
+          "SECURITY_IMPLEMENTATION.md",
+          "BRANCH_MERGE_AUDIT.md",
+          "BRANCH_CLEANUP_RECOMMENDATIONS.md"
+        ],
+        "priority": "medium"
+      },
+      {
+        "target": "06-YYC3-API-Mana-运维保障阶段/0601-运维策略/",
+        "files": [
+          "PERFORMANCE_OPTIMIZATION_GUIDE.md",
+          "WORKFLOWS.md",
+          "WORKFLOW_IMPROVEMENTS.md"
+        ],
+        "priority": "medium"
+      },
+      {
+        "target": "05-YYC3-API-Mana-交付部署阶段/0507-交付物管理/",
+        "files": [
+          "DEPLOYMENT_TROUBLESHOOTING.md"
+        ],
+        "priority": "low"
+      }
+    ],
+    "estimated_effort": "2-3 hours for full migration"
+  },
+  "validation_rules": {
+    "required_metadata_fields": [
+      "file",
+      "description",
+      "author",
+      "version",
+      "created",
+      "updated",
+      "status",
+      "tags",
+      "category",
+      "language",
+      "checksum",
+      "trace_id"
+    ],
+    "brand_header_required": true,
+    "core_concepts_section_required": true,
+    "brand_footer_required": true,
+    "max_description_length": 50,
+    "min_tags": 2,
+    "max_tags": 6,
+    "allowed_statuses": [
+      "draft",
+      "review",
+      "published",
+      "archived",
+      "deprecated"
+    ],
+    "allowed_categories": [
+      "general",
+      "technical",
+      "api",
+      "project",
+      "security",
+      "operations",
+      "design"
+    ]
+  }
+}
