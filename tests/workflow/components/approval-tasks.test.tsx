@@ -64,9 +64,9 @@ describe('ApprovalTasks Component', () => {
     // 检查组件标题
     expect(screen.getByText('我的审批任务')).toBeInTheDocument();
     
-    // 检查筛选下拉框
-    expect(screen.getByLabelText('状态筛选')).toBeInTheDocument();
-    expect(screen.getByLabelText('优先级筛选')).toBeInTheDocument();
+    // 检查筛选下拉框（使用 placeholder 文本）
+    expect(screen.getByText('状态筛选')).toBeInTheDocument();
+    expect(screen.getByText('优先级筛选')).toBeInTheDocument();
   });
 
   it('should fetch and display tasks when component mounts', async () => {

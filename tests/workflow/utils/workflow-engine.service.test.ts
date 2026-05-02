@@ -241,7 +241,7 @@ describe('Workflow Engine Service', () => {
       });
 
       // 调用函数
-      const result = await workflowEngineService.approveTask('task-1', '同意该申请');
+      const result = await workflowEngineService.approveTask('task-1', { comment: '同意该申请' });
 
       // 验证结果
       expect(result).toEqual(mockResponse);
@@ -265,7 +265,7 @@ describe('Workflow Engine Service', () => {
       });
 
       // 调用函数
-      const result = await workflowEngineService.approveTask('task-1');
+      const result = await workflowEngineService.approveTask('task-1', { comment: '' });
 
       // 验证结果
       expect(result).toEqual(mockResponse);
@@ -299,7 +299,7 @@ describe('Workflow Engine Service', () => {
       });
 
       // 调用函数
-      const result = await workflowEngineService.rejectTask('task-1', '不符合公司政策');
+      const result = await workflowEngineService.rejectTask('task-1', { reason: '不符合公司政策' });
 
       // 验证结果
       expect(result).toEqual(mockResponse);
@@ -313,7 +313,7 @@ describe('Workflow Engine Service', () => {
       mockAxios.post.mockRejectedValueOnce(new Error('Rejection failed'));
 
       // 验证错误
-      await expect(workflowEngineService.rejectTask('task-1', '理由')).rejects.toThrow('Rejection failed');
+      await expect(workflowEngineService.rejectTask('task-1', { reason: '理由' })).rejects.toThrow('Rejection failed');
     });
   });
 
@@ -333,7 +333,7 @@ describe('Workflow Engine Service', () => {
       });
 
       // 调用函数
-      const result = await workflowEngineService.addTaskComment('task-1', '请尽快处理');
+      const result = await workflowEngineService.addTaskComment('task-1', { content: '请尽快处理' });
 
       // 验证结果
       expect(result).toEqual(mockResponse);
@@ -527,7 +527,7 @@ describe('Workflow Engine Service', () => {
 
       // 验证结果
       expect(result).toEqual(mockStatistics);
-      expect(mockAxios.get).toHaveBeenCalledWith('/api/workflow/statistics');
+      expect(mockAxios.get).toHaveBeenCalledWith('/api/workflow/statistics', undefined);
     });
 
     it('should get workflow statistics with date range filter', async () => {

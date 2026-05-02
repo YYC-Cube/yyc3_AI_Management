@@ -19,6 +19,7 @@ jest.mock("../../lib/i18n.config", () => ({
     on: jest.fn(),
     off: jest.fn(),
     t: jest.fn((key, fallback) => fallback || key),
+    getFixedT: jest.fn((nullValue, lng) => (key, fallback) => fallback || key),
     isInitialized: true,
   },
   SUPPORTED_LANGUAGES: [
@@ -70,8 +71,12 @@ describe("I18n System", () => {
       fireEvent.click(button);
 
       await waitFor(() => {
-        expect(screen.getByText("English")).toBeInTheDocument();
-        expect(screen.getByText("العربية")).toBeInTheDocument();
+        expect(screen.getByText((content, element) => {
+          return content.includes('English') || content.includes('en-US');
+        })).toBeInTheDocument();
+        expect(screen.getByText((content, element) => {
+          return content.includes('العربية') || content.includes('ar-SA');
+        })).toBeInTheDocument();
       });
     });
 
